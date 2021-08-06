@@ -1,3 +1,5 @@
+package robocamp;
+
 import lejos.nxt.*;
 import lejos.util.Stopwatch;
 
@@ -5,7 +7,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2021.2
+ * @version 2021.3
  */
 public class Robotabor {
 
@@ -173,7 +175,7 @@ public class Robotabor {
 		}
 	}
 
-	private static Stopwatch _TT;
+	private static Stopwatch _TT = new Stopwatch();
 
 	/**
 	 * Vytiskni hodnotu
@@ -358,7 +360,9 @@ public class Robotabor {
 	/**
 	 * motory pripojene k jednotlivym portum
 	 */
-	public static NXTRegMotor motA, motB, motC;
+	public static NXTRegMotor motA = new NXTRegMotor(MotorPort.A);
+	public static NXTRegMotor motB = new NXTRegMotor(MotorPort.B);
+	public static NXTRegMotor motC = new NXTRegMotor(MotorPort.C);
 
 	/*
 	 * Priklad pouziti sensoru:
@@ -461,15 +465,8 @@ public class Robotabor {
 	 *            sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		debugPrint("EasyRobotLibrary v 2021.2\n");
-		_TT = new Stopwatch();
-		_TT.reset();
-		motA = new NXTRegMotor(MotorPort.A);
-		motA.flt();
-		motB = new NXTRegMotor(MotorPort.B);
-		motB.flt();
-		motC = new NXTRegMotor(MotorPort.C);
-		motC.flt();
+		debugPrint("EasyRobotLibrary v 2021.3\n");
+
 		_light_ct = 1;
 		_touch_ct = 1;
 		_sonar_ct = 1;
@@ -477,6 +474,13 @@ public class Robotabor {
 		attachSensor(p2, SensorPort.S2);
 		attachSensor(p3, SensorPort.S3);
 		attachSensor(p4, SensorPort.S4);
+	}
+
+	static {
+		_TT.reset();
+		motA.flt();
+		motB.flt();
+		motC.flt();
 	}
 
 	/**
