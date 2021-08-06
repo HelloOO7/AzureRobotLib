@@ -1,5 +1,3 @@
-package robocamp;
-
 import lejos.nxt.*;
 import lejos.util.Stopwatch;
 
