@@ -463,15 +463,24 @@ public class Robotabor {
 	 *            sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		debugPrint("EasyRobotLibrary v 2021.3\n");
+		init(new Sensor[]{p1, p2, p3, p4});
+	}
+
+	public static void init(Sensor... senzory) {
+		debugPrint("EasyRobotLibrary v 2021.4\n");
 
 		_light_ct = 1;
 		_touch_ct = 1;
 		_sonar_ct = 1;
-		attachSensor(p1, SensorPort.S1);
-		attachSensor(p2, SensorPort.S2);
-		attachSensor(p3, SensorPort.S3);
-		attachSensor(p4, SensorPort.S4);
+		for (int i = 0; i < 4; i++) {
+			attachSensorFromBuffer(senzory, i, SensorPort.getInstance(i));
+		}
+	}
+
+	private static void attachSensorFromBuffer(Sensor[] buf, int index, SensorPort port) {
+		if (index < buf.length) {
+			attachSensor(buf[index], port);
+		}
 	}
 
 	static {
