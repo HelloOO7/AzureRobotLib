@@ -466,6 +466,11 @@ public class Robotabor {
 		init(new Sensor[]{p1, p2, p3, p4});
 	}
 
+	/**
+	 * Inicializace knihony s pripojenim libovolneho poctu senzoru.
+	 *
+	 * @param senzory Varags senzoru. Prvni parametr je port 1, druhy port 2 atd.
+	 */
 	public static void init(Sensor... senzory) {
 		debugPrint("EasyRobotLibrary v 2021.4\n");
 
@@ -480,6 +485,9 @@ public class Robotabor {
 	private static void attachSensorFromBuffer(Sensor[] buf, int index, SensorPort port) {
 		if (index < buf.length) {
 			attachSensor(buf[index], port);
+		}
+		else {
+			attachSensor(Sensor.NONE, port);
 		}
 	}
 
