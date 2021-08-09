@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2021.3
+ * @version 2021.5
  */
 public class Robotabor {
 
@@ -472,7 +472,7 @@ public class Robotabor {
 	 * @param senzory Varags senzoru. Prvni parametr je port 1, druhy port 2 atd.
 	 */
 	public static void init(Sensor... senzory) {
-		debugPrint("EasyRobotLibrary v 2021.4\n");
+		debugPrint("EasyRobotLibrary v 2021.5\n");
 
 		_light_ct = 1;
 		_touch_ct = 1;
