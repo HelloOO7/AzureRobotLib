@@ -15,6 +15,9 @@ public class AzInputStream extends DataInputStream{
 		while ((c = (char)in.read()) != 0x00){
 			sb.append(c);
 		}
+		if (sb.length() == 0) {
+			return null;
+		}
 		return sb.toString();
 	}
 
@@ -25,7 +28,7 @@ public class AzInputStream extends DataInputStream{
 		//Charset is irrelevant on NXJ
 		return new String(buf).equals(magic);
 	}
-	
+
 	public byte[] readSizedArray(int size) throws IOException {
 		byte[] arr = new byte[size];
 		read(arr);

@@ -25,7 +25,7 @@ public abstract class Button extends ILayoutDrawable{
 				LayoutGraphics.g.drawString(text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 			else {
-				LayoutGraphics.g.drawString(">" + text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+				LayoutGraphics.g.drawString(">" + text, x - 4, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 		}
 

@@ -46,7 +46,7 @@ public class SoundSeqConverter {
 	}
 
 	public static byte[][] convertToMultiChannel(File midiFile) {
-		System.out.println("converting " + midiFile.getName());
+		System.out.println("Converting " + midiFile.getName());
 		try {
 			Sequence seq = MidiSystem.getSequence(midiFile);
 			byte[][] r = new byte[seq.getTracks().length][];
@@ -120,35 +120,49 @@ public class SoundSeqConverter {
 				MidiMessage msg = evt.getMessage();
 				int cmd = msg.getMessage()[0] & 0xFF;
 				if (cmd >= 0x90 && cmd <= 0x9F) {
+					//Note
 					int key = msg.getMessage()[1] & 0xFF;
 					if (msg.getMessage()[2] == 0 && notesDown.containsKey(key)) {
+						//Turn note off
 						int originNoteTick = notesDown.get(key);
-						commands.add(new AzSeqCmd((int) (originNoteTick / tickScale), key,
-								(int) ((tick - originNoteTick) / tickScale)));
+						commands.add(
+								new AzSeqCmd((int) (originNoteTick / tickScale),
+								key,
+								(int) ((tick - originNoteTick) / tickScale)
+								)
+						);
 						notesDown.remove(key);
 					} else {
+						//Register not for turn-on
 						notesDown.put(key, tick);
 					}
 				} else if (cmd == 0xFF) {
 					switch (msg.getMessage()[1]) {
 					case 0x51:
-						if (tsSet){
-							break;
-						}
+						//Set tempo
 						int ts = ((msg.getMessage()[3] & 0xFF) << 16) | ((msg.getMessage()[4] & 0xFF) << 8)
 								| (msg.getMessage()[5] & 0xFF);
+						//System.out.println("Requested tempo " + ts);
+						if (tsSet){
+							//System.out.println("...but tempo is already set!");
+							break;
+						}
 						tickScale = (float) (ts / 50000f * (midiResolution / 1000f));
 						tsSet = true;
 						break;
 					}
 				} else if (cmd >= 0x80 && cmd <= 0x8F) {
+					//Turn note off
 					int key = msg.getMessage()[1] & 0xFF;
 					if (!notesDown.containsKey(key)) {
 						continue;
 					}
 					int originNoteTick = notesDown.get(key);
-					commands.add(new AzSeqCmd((int) (originNoteTick / tickScale), key,
-							(int) ((tick - originNoteTick) / tickScale)));
+					commands.add(new AzSeqCmd(
+							(int) (originNoteTick / tickScale),
+							key,
+							(int) ((tick - originNoteTick) / tickScale)
+							));
 					notesDown.remove(key);
 				}
 			}

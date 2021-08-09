@@ -1,6 +1,8 @@
 package azure.bt;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 import azure.bt.AzureConnection.ReceiverThread.PacketWrapper;
@@ -11,6 +13,8 @@ import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
 
 public class AzureConnection {
+	private final String target;
+
 	private BTConnection btCon;
 
 	private DataOutputStream out;
@@ -19,13 +23,37 @@ public class AzureConnection {
 	private ReceiverThread recv = new ReceiverThread();
 
 	public AzureConnection(String target){
-		btCon = Bluetooth.connect(target, NXTConnection.RAW);
-		openStreams();
+		this.target = target;
+		reopenConnection();
+		recv.start();
 	}
 
 	public AzureConnection(){
-		btCon = Bluetooth.waitForConnection(0, NXTConnection.RAW);
-		openStreams();
+		target = null;
+		reopenConnection();
+		recv.start();
+	}
+
+	public void reopenConnection() {
+		if (btCon != null) {
+			try {
+				close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		if (target == null) {
+			btCon = Bluetooth.waitForConnection(0, NXTConnection.RAW);
+			openStreams();
+		}
+		else {
+			btCon = Bluetooth.connect(target, NXTConnection.RAW);
+			openStreams();
+		}
+	}
+
+	public void addRecvListener(AzureConnectionRecvListener l) {
+		recv.addRecvListener(l);
 	}
 
 	private void openStreams(){
@@ -33,7 +61,6 @@ public class AzureConnection {
 			out = btCon.openDataOutputStream();
 			in = new AzInputStream(btCon.openInputStream());
 			recv.bindInputStream(in);
-			recv.start();
 		}
 	}
 
@@ -49,6 +76,11 @@ public class AzureConnection {
 		out.write(0);
 		new DefaultPacket(str).send(out);
 		out.flush();
+	}
+
+	public void close() throws IOException {
+		out.close();
+		btCon.close();
 	}
 
 	public void waitForMessage(){
@@ -74,6 +106,14 @@ public class AzureConnection {
 
 		public Queue<PacketWrapper> data = new Queue<>();
 
+		private List<AzureConnectionRecvListener> listeners = new ArrayList<>();
+
+		public void addRecvListener(AzureConnectionRecvListener l) {
+			if (l != null && !listeners.contains(l)) {
+				listeners.add(l);
+			}
+		}
+
 		public void bindInputStream(AzInputStream in){
 			invalidate();
 			this.in = in;
@@ -94,10 +134,14 @@ public class AzureConnection {
 					int packetFormat = in.read();
 					switch (packetFormat){
 						case 0:
-							data.addElement(PacketWrapper.wrap(
+							PacketWrapper packet = PacketWrapper.wrap(
 									DefaultPacket.class,
 									new DefaultPacket(in)
-							));
+							);
+							data.addElement(packet);
+							for (AzureConnectionRecvListener l : listeners) {
+								l.onPacketReceived(packet);
+							}
 							break;
 						case -1:
 							exited = true;
@@ -126,5 +170,9 @@ public class AzureConnection {
 				return w;
 			}
 		}
+	}
+
+	public static interface AzureConnectionRecvListener {
+		public void onPacketReceived(PacketWrapper packet);
 	}
 }

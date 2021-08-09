@@ -45,6 +45,7 @@ public class ResourceManager {
 			imageData.close();
 			return new Image(width, height, data);
 		} catch (IOException e) {
+			System.err.println("Could not read image " + resource);
 			e.printStackTrace();
 			return null;
 		}

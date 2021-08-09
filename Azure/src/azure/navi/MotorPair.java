@@ -8,8 +8,15 @@ public class MotorPair {
 	protected NXTRegulatedMotor engineL;
 	protected NXTRegulatedMotor engineR;
 
-	public final MechanicsType m;
+	public MechanicsType m = MechanicsType.TANDEM;
+	public MotorDirConfig md = MotorDirConfig.FORWARD;
 	private EngineDir engineDir = EngineDir.FWD;
+
+	private float distanceMul = 1f;
+
+	public MotorPair(MotorPort left, MotorPort right, MechanicsType m) {
+		this(left, right, m, MotorDirConfig.FORWARD);
+	}
 
 	/**
 	 * Instantiates a MotorPair with a given configuration.
@@ -17,21 +24,22 @@ public class MotorPair {
 	 * @param right Port of the "right" motor.
 	 * @param m MechanicsType relation between the two motors.
 	 */
-	public MotorPair(MotorPort left, MotorPort right, MechanicsType m) {
+	public MotorPair(MotorPort left, MotorPort right, MechanicsType m, MotorDirConfig dir) {
 		engineL = new NXTRegulatedMotor(left);
 		engineR = new NXTRegulatedMotor(right);
+		this.md = dir;
 		this.m = m;
 	}
 
 	private float dist;
-	private float diam;
+	private float radius;
 
 	/**
 	 * Sets the engine speed in millimeters per second.
 	 * @param mmps Speed in mm/s.
 	 */
 	public void setEngineSpeedMmps(float mmps) {
-		float degps = (float) Math.toDegrees(mmps / diam);
+		float degps = (float) Math.toDegrees(mmps / radius);
 		engineL.setSpeed(degps);
 		engineR.setSpeed(degps);
 	}
@@ -43,7 +51,7 @@ public class MotorPair {
 	 */
 	public void setTurnConstants(float distance, float diameter) {
 		dist = distance / 2f;
-		diam = diameter / 2f;
+		radius = diameter / 2f;
 	}
 
 	/**
@@ -53,10 +61,9 @@ public class MotorPair {
 	public void turn(float deg) {
 		resetMotorState();
 		float alfa = deg * dist
-			/ diam;
-		int ialfa = Math.round(alfa);
-		engineR.rotate(ialfa, true);
-		engineL.rotate(m == MechanicsType.TANDEM ? -ialfa : ialfa, false);
+			/ radius;
+		engineR.rotate(Math.round(getRValue(alfa)), true);
+		engineL.rotate(Math.round(getLValue(-alfa)), false);
 	}
 
 	/**
@@ -65,10 +72,29 @@ public class MotorPair {
 	 */
 	public void go(float millimeters) {
 		resetMotorState();
-		float alfa = (float) Math.toDegrees(millimeters / diam);
-		int ialfa = Math.round(alfa);
-		engineR.rotate(ialfa, true);
-		engineL.rotate(ialfa, false);
+		float alfa = mmToDeg(millimeters) * distanceMul;
+		engineR.rotate(Math.round(getRValue(alfa)), true);
+		engineL.rotate(Math.round(getLValue(alfa)), false);
+	}
+
+	public void setDistanceMul(float mul) {
+		distanceMul = mul;
+	}
+
+	public float degToMm(float deg) {
+		return (float)(Math.toRadians(deg) * radius);
+	}
+
+	public float mmToDeg(float mm) {
+		return (float) Math.toDegrees(mm / radius);
+	}
+
+	private float getLValue(float val) {
+		return md == MotorDirConfig.INVERSE ? -val : val;
+	}
+
+	private float getRValue(float val) {
+		return (m == MechanicsType.COUNTER ^ md == MotorDirConfig.INVERSE) ? -val : val;
 	}
 
 	private static final float DEFAULT_SPEED = 360f;
@@ -90,7 +116,7 @@ public class MotorPair {
 	}
 
 	/**
-	 * Sets the default speed value to an user-provided constant. 
+	 * Sets the default speed value to an user-provided constant.
 	 * The method has no effect until the engines are told to use the default speed.
 	 *
 	 * @param value Speed in degrees per second.
@@ -118,6 +144,11 @@ public class MotorPair {
 		engineR.setSpeed(value);
 	}
 
+	public void setEngineAcceleration(int a) {
+		engineL.setAcceleration(a);
+		engineR.setAcceleration(a);
+	}
+
 	/**
 	 * Sets the engine speed separately for each motor.
 	 *
@@ -140,18 +171,22 @@ public class MotorPair {
 		}
 	}
 
+	public int getTachoCount() {
+		return engineL.getTachoCount();
+	}
+
 	/**
 	 * Changes the motor direction to forwards. Requires calling startTheEngines to commit the state.
 	 */
 	public void setDirFwd() {
-		engineDir = EngineDir.FWD;
+		engineDir = md == MotorDirConfig.INVERSE ? EngineDir.BWD : EngineDir.FWD;
 	}
 
 	/**
 	 * Changes the motor direction to backwards. Requires calling startTheEngines to commit the state.
 	 */
 	public void setDirBwd() {
-		engineDir = EngineDir.BWD;
+		engineDir = md == MotorDirConfig.INVERSE ? EngineDir.FWD : EngineDir.BWD;
 	}
 
 	/**
@@ -208,8 +243,11 @@ public class MotorPair {
 	 * Immediately ceases engine motion.
 	 */
 	public void haltTheEngines() {
+		int acce = engineL.getAcceleration();
+		setEngineAcceleration(6000);
 		engineL.stop(true);
 		engineR.stop();
+		setEngineAcceleration(acce);
 		resetMotorState();
 	}
 
@@ -234,6 +272,11 @@ public class MotorPair {
 		 * One engine runs in reverse direction than the other.
 		 */
 		COUNTER
+	}
+
+	public static enum MotorDirConfig {
+		FORWARD,
+		INVERSE
 	}
 
 	/**

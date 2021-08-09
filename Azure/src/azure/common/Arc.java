@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import lejos.nxt.Button;
+import lejos.nxt.Flash;
+
 public class Arc {
 	private File origin;
 
@@ -32,9 +35,17 @@ public class Arc {
 		}
 	}
 
+	public int getPageForOffset(int offset) {
+		return origin.getPage() + offset / Flash.BYTES_PER_PAGE;
+	}
+
+	public int getOffsetInPage(int offset) {
+		return offset % Flash.BYTES_PER_PAGE;
+	}
+
 	public byte[] getFile(String resPath) {
 		try {
-			ArcFileInfo i = getFileDescriptor(files.get(0).getFullResourceName() + resPath);
+			ArcFileInfo i = getFileDescriptor(resPath);
 			if (i != null && !i.isDirectory) {
 				// Open origin input stream and retrieve the file from the
 				// cached offset
@@ -51,11 +62,15 @@ public class Arc {
 		throw new IllegalArgumentException("AZ_ARC: This archive does not contain the given resource.");
 	}
 
+	public InputStream getFileAsStream(ArcFileInfo info) throws IOException {
+		FileInputStream in = new FileInputStream(origin);
+		in.skip(info.resourceDataOffset);
+		return in;
+	}
+
 	public InputStream getFileAsStream(String resPath){
 		try {
-			FileInputStream in = new FileInputStream(origin);
-			in.skip(getFileDescriptor(files.get(0).getFullResourceName() + resPath).resourceDataOffset);
-			return in;
+			return getFileAsStream(getFileDescriptor(resPath));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -63,11 +78,15 @@ public class Arc {
 	}
 
 	public ArcFileInfo getFileDescriptor(String resPath) {
+		resPath = files.get(0).getFullResourceName() + resPath;
 		for (ArcFileInfo i : files) {
 			if (i.getFullResourceName().equals(resPath)) {
 				return i;
 			}
 		}
+		System.err.println("Resource " + resPath + " not found!");
+		Button.waitForAnyPress();
+		System.exit(0);
 		return null;
 	}
 

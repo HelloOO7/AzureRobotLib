@@ -11,20 +11,26 @@ import java.util.List;
 import java.util.Scanner;
 
 import compression.LZ11;
+import nxjupload.NXJFileSystem;
 
 /**
  * Converts a filesystem directory into an Azure-format archive.
- * 
+ *
  * PNG files are converted into native LeJOS platform bitmaps.
  * MIDI files are converted into AzureSeq's playback engine binaries.
  */
 public class ArcConverter {
 
+	public static final String AZURE_ARC_DEFAULT_RESOURCE = "azure_resources";
+	public static final String AZURE_ARC_EXTENSION = ".arc";
+
 	public static final String AZURE_ARC_MAGIC = "AZUREARCHIVE";
+
+	public static final int NXT_PAGE_ALIGNMENT = 256;
 
 	public static void main(String[] args) {
 		if (args.length == 0) {
-			args = new String[]{"azure_resources"};
+			args = new String[]{AZURE_ARC_DEFAULT_RESOURCE};
 		}
 		File arcRoot = new File(args[0]);
 
@@ -57,7 +63,7 @@ public class ArcConverter {
 		// BEGIN FILE OUTPUT
 		calculateOffsets(files);
 
-		File output = new File(args[0] + ".arc");
+		File output = new File(args[0] + AZURE_ARC_EXTENSION);
 
 		try {
 			DataOutputStream out = new DataOutputStream(new FileOutputStream(output));
@@ -68,14 +74,20 @@ public class ArcConverter {
 				i.write(out, files);
 			}
 			for (ArcFileInfo i : files) {
+				System.out.println("Writing file " + i.getFullResPath());
 				if (i.isDirectory) {
 					continue;
+				}
+				while (out.size() < i.resourceDataOffset) {
+					out.write(0);
 				}
 				out.write(i.origin);
 			}
 			out.close();
 
 			LZ11.compressFile(output);
+
+			ArcSync.sendAzarcToNxt(output);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -94,30 +106,30 @@ public class ArcConverter {
 				} else {
 					if (f.getName().endsWith(".png")) {
 						i.origin = ImageConverter.convertImage(f);
-					} else {
-						if (f.getName().endsWith(".mid")) {
-							ArcFileInfo seqDir = new ArcFileInfo();
-							seqDir.isDirectory = true;
-							seqDir.parentResource = i.parentResource;
-							seqDir.resourceName = i.resourceName;
-							target.add(seqDir);
+					} else if (f.getName().endsWith(".wav")) {
+						i.origin = SoundSampleConverter.convertSoundSample(f);
+					} else if (f.getName().endsWith(".mid")) {
+						ArcFileInfo seqDir = new ArcFileInfo();
+						seqDir.isDirectory = true;
+						seqDir.parentResource = i.parentResource;
+						seqDir.resourceName = i.resourceName;
+						target.add(seqDir);
 
-							byte[][] chdata = SoundSeqConverter.convertToMultiChannel(f);
-							i.resourceName = "channel0.azseq";
-							i.parentResource = seqDir;
-							i.origin = chdata[0];
-							for (int c = 1; c < chdata.length; c++) {
-								ArcFileInfo newChannel = new ArcFileInfo();
-								newChannel.isDirectory = false;
-								newChannel.parentResource = seqDir;
-								newChannel.resourceName = "channel" + c + ".azseq";
-								newChannel.origin = chdata[c];
-								newChannel.resourceDataLength = chdata[c].length;
-								target.add(newChannel);
-							}
-						} else {
-							i.origin = Files.readAllBytes(f.toPath());
+						byte[][] chdata = NGSoundSeqConverter.convertToMultiChannel(f);
+						i.resourceName = "channel0.azseq";
+						i.parentResource = seqDir;
+						i.origin = chdata[0];
+						for (int c = 1; c < chdata.length; c++) {
+							ArcFileInfo newChannel = new ArcFileInfo();
+							newChannel.isDirectory = false;
+							newChannel.parentResource = seqDir;
+							newChannel.resourceName = "channel" + c + ".azseq";
+							newChannel.origin = chdata[c];
+							newChannel.resourceDataLength = chdata[c].length;
+							target.add(newChannel);
 						}
+					} else {
+						i.origin = Files.readAllBytes(f.toPath());
 					}
 					i.resourceDataLength = i.origin.length;
 					target.add(i);
@@ -135,12 +147,22 @@ public class ArcConverter {
 		}
 		int ofs = baseOfs;
 		for (ArcFileInfo f : files) {
+			if (f.resourceNeedsPageAlign) {
+				ofs = padInteger(ofs, NXT_PAGE_ALIGNMENT);
+			}
 			f.resourceDataOffset = ofs;
 			ofs += f.resourceDataLength;
 		}
 	}
 
+	public static int padInteger(int v, int padTo) {
+		v += (padTo - (v % padTo)) % padTo;
+		return v;
+	}
+
 	public static class ArcFileInfo {
+
+		public boolean resourceNeedsPageAlign;
 
 		public byte[] origin;
 
@@ -157,6 +179,13 @@ public class ArcConverter {
 			out.writeShort(library.indexOf(parentResource));
 			out.writeShort(resourceDataOffset);
 			out.writeShort(resourceDataLength);
+		}
+
+		public String getFullResPath() {
+			if (parentResource != null) {
+				return parentResource.getFullResPath() + "/" + resourceName;
+			}
+			return "/" + resourceName;
 		}
 
 		public int getByteSize() {

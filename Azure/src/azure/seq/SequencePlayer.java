@@ -64,4 +64,16 @@ public class SequencePlayer {
 			}
 		}
 	}
+
+	public static void playSequenceAndLoop(String seqName, int channel, boolean join) {
+		Thread player = createSequenceThread(seqName, channel, true);
+		player.start();
+		if (join) {
+			try {
+				player.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
