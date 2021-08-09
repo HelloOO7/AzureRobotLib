@@ -1,7 +1,9 @@
 package azure.bt;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import azure.common.AzInputStream;
 
@@ -9,7 +11,7 @@ public class AzPacket {
 
 	public static final String AZURE_MAGIC = "AZPK";
 	public static final String TERM_MAGIC = "TERM";
-	
+
 	protected DataType[] bufferFormats;
 	protected Object[] values;
 
@@ -27,8 +29,18 @@ public class AzPacket {
 	}
 
 	public void read(AzInputStream in) throws IOException {
-		if (!in.getMagic(AZURE_MAGIC)) {
-			throw new UnsupportedOperationException("The incoming data is not an Azure packet.");
+		byte[] buf = new byte[AZURE_MAGIC.length()];
+		in.read(buf);
+		String magic = new String(buf);
+		if (!magic.equals(AZURE_MAGIC)) {
+			int magicInt = 0;
+			for (int i = 0; i < magic.length(); i++) {
+				magicInt |= magic.charAt(i) << (i * 8);
+			}
+			byte[] rest = new byte[in.available()];
+			in.read(rest);
+
+			throw new UnsupportedOperationException(Arrays.toString(buf) + Arrays.toString(rest) + " - The incoming data is not an Azure packet.");
 		}
 
 		int bufferCount = in.read();

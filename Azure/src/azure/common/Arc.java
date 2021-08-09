@@ -106,7 +106,7 @@ public class Arc {
 			if (pidx != -1){
 				i.parentResource = tree.get(pidx);
 			}
-			i.resourceDataOffset = dis.readUnsignedShort();
+			i.resourceDataOffset = dis.readInt();
 			i.resourceDataLength = dis.readUnsignedShort();
 			return i;
 		}

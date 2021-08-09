@@ -21,14 +21,14 @@ public class AzSeq {
 	 */
 	public static void playSequence(InputStream in){
 		try {
+			long start = System.currentTimeMillis();
+
 			AzInputStream dis = new AzInputStream(in);
 			dis.getMagic(AZURE_SEQ_HEADER);
 
 			SequencingContext ctx = new SequencingContext(dis);
 
 			int cmdCount = dis.readInt();
-
-			long start = System.currentTimeMillis();
 
 			for (int i = 0; i < cmdCount; i++){
 				CommandExecutor exec = null;

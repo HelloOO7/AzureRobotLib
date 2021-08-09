@@ -144,7 +144,7 @@ public class Robotabor {
 		 * @param degPerSecond
 		 *            pozadovana rychlost ve stupnich za sekundu
 		 */
-		public void origsetSpeed(int degPerSecond) {
+		public void origsetSpeed(float degPerSecond) {
 			super.setSpeed(degPerSecond);
 		}
 
@@ -969,8 +969,8 @@ public class Robotabor {
 		}
 
 		private void setSpeedInternal(float left, float right) {
-			motL.setSpeed(getLValue(left));
-			motR.setSpeed(getRValue(right));
+			motL.origsetSpeed(getLValue(left));
+			motR.origsetSpeed(getRValue(right));
 		}
 
 		/**

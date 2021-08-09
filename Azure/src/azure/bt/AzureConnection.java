@@ -1,4 +1,5 @@
 package azure.bt;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.Queue;
 import azure.bt.AzureConnection.ReceiverThread.PacketWrapper;
 import azure.bt.packets.DefaultPacket;
 import azure.common.AzInputStream;
+import lejos.nxt.Button;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
@@ -15,27 +17,45 @@ import lejos.nxt.comm.NXTConnection;
 public class AzureConnection {
 	private final String target;
 
-	private BTConnection btCon;
+	private NXTConnection con;
 
 	private DataOutputStream out;
 	private AzInputStream in;
 
-	private ReceiverThread recv = new ReceiverThread();
+	private ReceiverThread recv;
+
+	private AzConnectionType type;
 
 	public AzureConnection(String target){
+		this(target, AzConnectionType.BLUETOOTH);
+	}
+
+	public AzureConnection(String target, AzConnectionType t){
 		this.target = target;
+		this.type = t;
+		recv = new ReceiverThread(this);
 		reopenConnection();
 		recv.start();
 	}
 
-	public AzureConnection(){
+	public AzureConnection() {
+		this(AzConnectionType.BLUETOOTH);
+	}
+
+	public AzureConnection(AzConnectionType t){
 		target = null;
+		recv = new ReceiverThread(this);
 		reopenConnection();
 		recv.start();
+	}
+
+	public static enum AzConnectionType {
+		BLUETOOTH,
+		RS485
 	}
 
 	public void reopenConnection() {
-		if (btCon != null) {
+		if (con != null) {
 			try {
 				close();
 			} catch (IOException e) {
@@ -43,11 +63,11 @@ public class AzureConnection {
 			}
 		}
 		if (target == null) {
-			btCon = Bluetooth.waitForConnection(0, NXTConnection.RAW);
+			con = Bluetooth.waitForConnection(0, NXTConnection.RAW);
 			openStreams();
 		}
 		else {
-			btCon = Bluetooth.connect(target, NXTConnection.RAW);
+			con = Bluetooth.connect(target, NXTConnection.RAW);
 			openStreams();
 		}
 	}
@@ -57,30 +77,31 @@ public class AzureConnection {
 	}
 
 	private void openStreams(){
-		if (btCon != null){
-			out = btCon.openDataOutputStream();
-			in = new AzInputStream(btCon.openInputStream());
+		if (con != null){
+			out = con.openDataOutputStream();
+			in = new AzInputStream(con.openInputStream());
 			recv.bindInputStream(in);
 		}
 	}
 
-	public int getSignal(){
-		return btCon.getSignalStrength();
-	}
-
 	public boolean getIsConnected(){
-		return btCon != null;
+		return con != null;
 	}
 
-	public void send(String str) throws IOException{
-		out.write(0);
-		new DefaultPacket(str).send(out);
+	public int send(String str) throws IOException{
+		DefaultPacket pkt = new DefaultPacket(str);
+
 		out.flush();
+		out.write(0);
+		pkt.send(out);
+		long start = System.currentTimeMillis();
+		out.flush();
+
+		return (int)(System.currentTimeMillis() - start);
 	}
 
 	public void close() throws IOException {
-		out.close();
-		btCon.close();
+		con.close();
 	}
 
 	public void waitForMessage(){
@@ -100,13 +121,26 @@ public class AzureConnection {
 		return null;
 	}
 
+	public long getNextMessageTime() {
+		if (recv.data.isEmpty()){
+			return -1;
+		}
+		PacketWrapper w = (PacketWrapper) recv.data.peek();
+		return w.timestamp;
+	}
+
 	public static class ReceiverThread extends Thread{
 		private boolean exited = false;
 		private AzInputStream in = null;
+		private AzureConnection con;
 
 		public Queue<PacketWrapper> data = new Queue<>();
 
 		private List<AzureConnectionRecvListener> listeners = new ArrayList<>();
+
+		public ReceiverThread(AzureConnection con) {
+			this.con = con;
+		}
 
 		public void addRecvListener(AzureConnectionRecvListener l) {
 			if (l != null && !listeners.contains(l)) {
@@ -132,15 +166,22 @@ public class AzureConnection {
 						continue;
 					}
 					int packetFormat = in.read();
+					long recvTime = System.currentTimeMillis();
 					switch (packetFormat){
 						case 0:
+							try {
 							PacketWrapper packet = PacketWrapper.wrap(
 									DefaultPacket.class,
 									new DefaultPacket(in)
 							);
+							packet.timestamp = recvTime;
 							data.addElement(packet);
 							for (AzureConnectionRecvListener l : listeners) {
 								l.onPacketReceived(packet);
+							}
+							} catch (UnsupportedOperationException ex) {
+								System.out.println("Sender: " + con.target);
+								System.out.println(ex.getMessage());
 							}
 							break;
 						case -1:
@@ -160,6 +201,8 @@ public class AzureConnection {
 		}
 
 		public static class PacketWrapper{
+			public long timestamp;
+
 			public Class<? extends AzPacket> packetClass;
 			public AzPacket packet;
 
