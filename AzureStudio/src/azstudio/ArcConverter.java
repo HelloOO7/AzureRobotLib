@@ -177,7 +177,7 @@ public class ArcConverter {
 			out.write(isDirectory ? 1 : 0);
 			StringUtils.writeString(out, resourceName);
 			out.writeShort(library.indexOf(parentResource));
-			out.writeShort(resourceDataOffset);
+			out.writeInt(resourceDataOffset);
 			out.writeShort(resourceDataLength);
 		}
 
@@ -189,8 +189,8 @@ public class ArcConverter {
 		}
 
 		public int getByteSize() {
-			// 0x7 + string null terminator + resource name length
-			return 0x8 + resourceName.length();
+			// 0x9 + string null terminator + resource name length
+			return 0xA + resourceName.length();
 		}
 	}
 }

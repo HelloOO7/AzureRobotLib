@@ -73,6 +73,7 @@ public class MotorPair {
 	public void go(float millimeters) {
 		resetMotorState();
 		float alfa = mmToDeg(millimeters) * distanceMul;
+		System.out.println(alfa + " radius " + radius);
 		engineR.rotate(Math.round(getRValue(alfa)), true);
 		engineL.rotate(Math.round(getLValue(alfa)), false);
 	}

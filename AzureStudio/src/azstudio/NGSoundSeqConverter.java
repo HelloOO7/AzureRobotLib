@@ -30,9 +30,9 @@ public class NGSoundSeqConverter {
 		GENERALUSER_TO_AZSEQ_MAP.put(0, "GrandPno");
 		GENERALUSER_TO_AZSEQ_MAP.put(57, "Trombone");
 		GENERALUSER_TO_AZSEQ_MAP.put(61, "BrassSect");
-		GENERALUSER_TO_AZSEQ_MAP.put(64, "Sax");
+		/*GENERALUSER_TO_AZSEQ_MAP.put(64, "Sax");
 		GENERALUSER_TO_AZSEQ_MAP.put(65, "Sax");
-		GENERALUSER_TO_AZSEQ_MAP.put(66, "Sax");
+		GENERALUSER_TO_AZSEQ_MAP.put(66, "Sax");*/
 	}
 
 	public static byte[][] convertToMultiChannel(File midiFile) {
@@ -121,7 +121,7 @@ public class NGSoundSeqConverter {
 						float startTime = notesNowPlaying.get(key);
 						float nowTime = evt.getTick() * currentTempoScale;
 
-						commands.add(new AzSeqCmdQuantizable(startTime, key, nowTime - startTime));
+						commands.add(new AzSeqCmdPlayTone(startTime, key, nowTime - startTime));
 
 						notesNowPlaying.remove(key);
 					}
@@ -134,7 +134,7 @@ public class NGSoundSeqConverter {
 					if (mesg[2] == 0 && notesNowPlaying.containsKey(key)) {
 						// Turn note off
 						float noteStartTime = notesNowPlaying.get(key);
-						commands.add(new AzSeqCmdQuantizable(noteStartTime, key, nowTime - noteStartTime));
+						commands.add(new AzSeqCmdPlayTone(noteStartTime, key, nowTime - noteStartTime));
 						notesNowPlaying.remove(key);
 					} else {
 						// Register not for turn-on
@@ -167,6 +167,33 @@ public class NGSoundSeqConverter {
 					return (int)(o1.tick - o2.tick);
 				}
 			});
+
+			AzSeqCmdPlayTone last = null;
+			int lastIndex = -1;
+
+			for (int i = 0; i < commands.size(); i++) {
+				AzSeqCmd cmd = commands.get(i);
+				if (cmd instanceof AzSeqCmdPlayTone) {
+					AzSeqCmdPlayTone tone = (AzSeqCmdPlayTone) cmd;
+
+					if (last != null) {
+						if (last.tick == tone.tick) {
+							if (last.key > tone.key) {
+								commands.remove(i);
+								i--;
+								continue;
+							}
+							else {
+								commands.remove(lastIndex);
+								i--;
+							}
+						}
+					}
+
+					last = tone;
+					lastIndex = i;
+				}
+			}
 
 			for (int i = 0; i < commands.size() - 1; i++) {
 				AzSeqCmd thisCmd = commands.get(i);
@@ -203,8 +230,8 @@ public class NGSoundSeqConverter {
 				if (cmd.tick > tickMax) {
 					tickMax = cmd.tick;
 				}
-				if (cmd instanceof AzSeqCmdQuantizable) {
-					AzSeqCmdQuantizable qcmd = (AzSeqCmdQuantizable)cmd;
+				if (cmd instanceof AzSeqCmdPlayTone) {
+					AzSeqCmdPlayTone qcmd = (AzSeqCmdPlayTone)cmd;
 					if (qcmd.length < lengthMin) {
 						lengthMin = qcmd.length;
 					}
@@ -242,12 +269,12 @@ public class NGSoundSeqConverter {
 					float lengthScale) throws IOException;
 		}
 
-		public static class AzSeqCmdQuantizable extends AzSeqCmd {
+		public static class AzSeqCmdPlayTone extends AzSeqCmd {
 			private byte key;
 
 			private float length;
 
-			public AzSeqCmdQuantizable(float tick, int key, float length) {
+			public AzSeqCmdPlayTone(float tick, int key, float length) {
 				this.tick = tick;
 				this.key = (byte) key;
 				this.length = (short) length;

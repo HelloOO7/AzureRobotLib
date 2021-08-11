@@ -19,7 +19,7 @@ public class AzSeq {
 	 * Plays an AzureStudio sound sequence.
 	 * @param in An input stream to read the sequence from.
 	 */
-	public static void playSequence(InputStream in){
+	public static long playSequence(InputStream in){
 		try {
 			long start = System.currentTimeMillis();
 
@@ -65,10 +65,12 @@ public class AzSeq {
 			dis.close();
 
 			//System.out.println("AZSEQ finished, sleep for " + (start + ctx.tickLength - System.currentTimeMillis()));
-			Thread.sleep(start + ctx.tickLength - System.currentTimeMillis());
+			//Thread.sleep(start + ctx.tickLength - System.currentTimeMillis());
+			return ctx.tickLength;
 		} catch (InterruptedException | IOException e){
 			e.printStackTrace();
 		}
+		return 0;
 	}
 
 	public static final float[] tones = {16.35f, 17.32f, 18.35f, 19.45f, 20.6f, 21.83f, 23.12f, 24.5f, 25.96f, 27.50f, 29.14f, 30.87f};

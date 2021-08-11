@@ -3,6 +3,7 @@ package azure.seq;
 import java.io.InputStream;
 
 import azure.common.ResourceManager;
+import azure.navi.Sys;
 
 public class SequencePlayer {
 	public static final String SDAT_ROOT = "/sdat/";
@@ -18,13 +19,29 @@ public class SequencePlayer {
 		Thread sound = new Thread() {
 			@Override
 			public void run() {
-				AzSeq.playSequence(getAzSeqForNameAndChannel(seqName, channel));
-				while (!interrupted() && loop) {
-					AzSeq.playSequence(getAzSeqForNameAndChannel(seqName, channel));
+				if (loop) {
+					System.out.println("PlaySeq " + seqName + ":" + channel);
+					InputStream strm = getAzSeqForNameAndChannel(seqName, channel);
+					while (!interrupted()){
+						long start = System.currentTimeMillis();
+						long len = AzSeq.playSequence(strm);
+						strm = getAzSeqForNameAndChannel(seqName, channel);
+						System.out.println("Sleep " + (System.currentTimeMillis() - (start + len)));
+						Sys.delay(start + len - System.currentTimeMillis());
+					}
+				}
+				else {
+					playSequenceOnce(getAzSeqForNameAndChannel(seqName, channel));
 				}
 			}
 		};
 		return sound;
+	}
+
+	private static void playSequenceOnce(InputStream seqStream) {
+		long start = System.currentTimeMillis();
+		long len = AzSeq.playSequence(seqStream);
+		Sys.delay(start + len - System.currentTimeMillis());
 	}
 
 	/**

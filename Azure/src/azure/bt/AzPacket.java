@@ -1,6 +1,5 @@
 package azure.bt;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -33,10 +32,6 @@ public class AzPacket {
 		in.read(buf);
 		String magic = new String(buf);
 		if (!magic.equals(AZURE_MAGIC)) {
-			int magicInt = 0;
-			for (int i = 0; i < magic.length(); i++) {
-				magicInt |= magic.charAt(i) << (i * 8);
-			}
 			byte[] rest = new byte[in.available()];
 			in.read(rest);
 

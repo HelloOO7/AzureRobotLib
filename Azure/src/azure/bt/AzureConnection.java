@@ -1,5 +1,4 @@
 package azure.bt;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,10 +8,9 @@ import java.util.Queue;
 import azure.bt.AzureConnection.ReceiverThread.PacketWrapper;
 import azure.bt.packets.DefaultPacket;
 import azure.common.AzInputStream;
-import lejos.nxt.Button;
-import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
+import lejos.nxt.comm.RS485;
 
 public class AzureConnection {
 	private final String target;
@@ -44,6 +42,7 @@ public class AzureConnection {
 
 	public AzureConnection(AzConnectionType t){
 		target = null;
+		this.type = t;
 		recv = new ReceiverThread(this);
 		reopenConnection();
 		recv.start();
@@ -63,12 +62,26 @@ public class AzureConnection {
 			}
 		}
 		if (target == null) {
-			con = Bluetooth.waitForConnection(0, NXTConnection.RAW);
+			if (type == AzConnectionType.BLUETOOTH) {
+				con = Bluetooth.waitForConnection(0, NXTConnection.RAW);
+			}
+			else {
+				con = RS485.waitForConnection(0, NXTConnection.RAW);
+			}
 			openStreams();
 		}
 		else {
-			con = Bluetooth.connect(target, NXTConnection.RAW);
+			if (type == AzConnectionType.BLUETOOTH) {
+				con = Bluetooth.connect(target, NXTConnection.RAW);
+			}
+			else {
+				con = RS485.connect(target, NXTConnection.RAW);
+			}
 			openStreams();
+		}
+
+		if (con == null) {
+			throw new RuntimeException("Failed to connect!");
 		}
 	}
 
