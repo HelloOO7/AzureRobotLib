@@ -29,6 +29,7 @@ public class MotorPair {
 		engineR = new NXTRegulatedMotor(right);
 		this.md = dir;
 		this.m = m;
+		setDirFwd();
 	}
 
 	private float dist;
@@ -135,6 +136,10 @@ public class MotorPair {
 		return defaultSpeed;
 	}
 
+	public int getAcceleration() {
+		return engineL.getAcceleration();
+	}
+
 	/**
 	 * Sets the engine speed for both engines.
 	 *
@@ -173,7 +178,16 @@ public class MotorPair {
 	}
 
 	public int getTachoCount() {
-		return engineL.getTachoCount();
+		int left = engineL.getTachoCount();
+		int right = engineR.getTachoCount();
+		if (md == MotorDirConfig.INVERSE) {
+			left = -left;
+			right = -right;
+		}
+		if (m == MechanicsType.COUNTER) {
+			right = -right;
+		}
+		return (left + right) / 2;
 	}
 
 	/**

@@ -6,11 +6,14 @@ import lejos.nxt.Button;
 import lejos.nxt.LightSensor;
 import lejos.nxt.SensorPort;
 
-public abstract class LightSensorController {
+public class LightSensorController {
 	private LightSensor sen;
 
 	private short primaryColor;
 	private short secondaryColor;
+
+	private LightValueSet priColorOnoff;
+	private LightValueSet secColorOnoff;
 
 	/**
 	 * Creates a controller by a sensor port.
@@ -36,9 +39,11 @@ public abstract class LightSensorController {
 		lyt.setTextByLabelName("clyt_desc", getPrimaryColorName());
 		Button.waitForAnyPress();
 		primaryColor = (short) getImmediateValue();
+		priColorOnoff = getOnOffValues();
 		lyt.setTextByLabelName("clyt_desc", getSecondaryColorName());
 		Button.waitForAnyPress();
 		secondaryColor = (short) getImmediateValue();
+		secColorOnoff = getOnOffValues();
 		lyt.callSequence("clyt_finish");
 		Button.waitForAnyPress();
 		lyt.callSequence("clyt_hide");
@@ -58,7 +63,7 @@ public abstract class LightSensorController {
 
 	/**
 	 * Checks if the value is closest to the primary controller color.
-	 * @return 
+	 * @return
 	 */
 	public boolean getValueIsPrimary() {
 		int value = getImmediateValue();
@@ -67,7 +72,7 @@ public abstract class LightSensorController {
 
 	/**
 	 * Checks if the value is closest to the secondary controller color.
-	 * @return 
+	 * @return
 	 */
 	public boolean getValueIsSecondary() {
 		return !getValueIsPrimary();
@@ -100,9 +105,22 @@ public abstract class LightSensorController {
 		return Math.min(1, Math.max(-1, ((c - primaryColor) / (float)(secondaryColor - primaryColor) - 0.5f) * 2));
 	}
 
+	public float getUnitValueNoClamp() {
+		int c = getImmediateValue();
+		return ((c - primaryColor) / (float)(secondaryColor - primaryColor) - 0.5f) * 2;
+	}
+
+	public float getUnitValueOnoff() {
+		LightValueSet onoff = getOnOffValues();
+		float weightOn = (onoff.valueOn - priColorOnoff.valueOn) / (float)(secColorOnoff.valueOn - priColorOnoff.valueOn);
+		float weightOff = (onoff.valueOff - priColorOnoff.valueOff) / (float)(secColorOnoff.valueOff - priColorOnoff.valueOff);
+		System.out.println(weightOn + "/" + weightOff);
+		return (weightOff + weightOn) - 1f;
+	}
+
 	/**
 	 * Gets the values read from the light sensor when the floodlight is off and on.
-	 * @return 
+	 * @return
 	 */
 	public LightValueSet getOnOffValues() {
 		sen.setFloodlight(false);
@@ -140,9 +158,13 @@ public abstract class LightSensorController {
 		return secondaryColor;
 	}
 
-	public abstract String getPrimaryColorName();
+	public String getPrimaryColorName() {
+		return "PRIMARY";
+	}
 
-	public abstract String getSecondaryColorName();
+	public String getSecondaryColorName() {
+		return "SECONDARY";
+	}
 
 	public static class BlackWhiteSensorController extends LightSensorController {
 		public BlackWhiteSensorController(SensorPort port) {
@@ -199,7 +221,7 @@ public abstract class LightSensorController {
 
 		/**
 		 * Lerps this light value set with another. Result is stored into `this`.
-		 * @param src 
+		 * @param src
 		 */
 		public void interpolateWith(LightValueSet src) {
 			valueOff = (src.valueOff + valueOff) / 2;

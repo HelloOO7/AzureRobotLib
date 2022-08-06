@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2021.5
+ * @version 2022.1
  */
 public class Robotabor {
 
@@ -781,7 +781,7 @@ public class Robotabor {
 			speed(1000);
 		}
 
-		private float way;
+		private float way = 0f;
 		/* 1 vpred (mm>0), -1 vzad (mm<0) */
 		private float target_dist;
 
@@ -889,6 +889,7 @@ public class Robotabor {
 				sleepMilliseconds(100);
 			}
 			setSpeedBothInternal(initialVelocity);
+			way = 0f;
 		}
 
 		/**
@@ -937,6 +938,7 @@ public class Robotabor {
 		public void forward() {
 			motL.forward();
 			motR.forward();
+			way = 1f;
 		}
 
 		/**
@@ -945,6 +947,7 @@ public class Robotabor {
 		public void backward() {
 			motL.backward();
 			motR.backward();
+			way = -1f;
 		}
 
 		/**
@@ -953,6 +956,7 @@ public class Robotabor {
 		public void stop() {
 			motL.stop();
 			motR.stop();
+			way = 0f;
 		}
 
 		/**
@@ -961,6 +965,7 @@ public class Robotabor {
 		public void flt() {
 			motL.flt();
 			motR.flt();
+			way = 0f;
 		}
 
 		private void setSpeedBothInternal(float degps) {
