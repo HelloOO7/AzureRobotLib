@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2022.1
+ * @version 2022.2
  */
 public class Robotabor {
 
@@ -954,7 +954,8 @@ public class Robotabor {
 		 * Zastavi robota brzdenim
 		 */
 		public void stop() {
-			motL.stop();
+			//Bugfix 2022.2 immediateReturn
+			motL.stop(true);
 			motR.stop();
 			way = 0f;
 		}
@@ -963,7 +964,8 @@ public class Robotabor {
 		 * Zastavi robota odpojenim motoru
 		 */
 		public void flt() {
-			motL.flt();
+			//Bugfix 2022.2 immediateReturn
+			motL.flt(true);
 			motR.flt();
 			way = 0f;
 		}
