@@ -11,6 +11,10 @@ import java.nio.file.StandardOpenOption;
 
 public class LZ11 {
 
+	public static void main(String[] args) {
+		compressFile(new File("azure_resources/sdat/sample/GrandPno.wav"));
+	}
+
 	public static void compressFile(File f){
 		try {
 			byte[] toCompress = Files.readAllBytes(f.toPath());

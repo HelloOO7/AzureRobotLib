@@ -29,7 +29,7 @@ public class TestingRuntime {
 	 * Server-side method for Bluetooth comm test.
 	 */
 	public static void sendTest(){
-		AzureConnection con = new AzureConnection("BLUE");
+		AzureConnection con = new AzureNXTConnection("BLUE");
 		try {
 			System.out.println("Connection established, sending");
 			con.send("test");
@@ -44,7 +44,7 @@ public class TestingRuntime {
 	 * Client-side method for Bluetooth comm test.
 	 */
 	public static void recvTest(){
-		AzureConnection con = new AzureConnection();
+		AzureConnection con = new AzureNXTConnection();
 		System.out.println("Connection established");
 		con.waitForMessage();
 		String read = con.nextMessage();

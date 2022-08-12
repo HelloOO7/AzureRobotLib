@@ -4,7 +4,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class AzInputStream extends DataInputStream{
+public class AzInputStream extends DataInputStream {
 	public AzInputStream(InputStream in) {
 		super(in);
 	}

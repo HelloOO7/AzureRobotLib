@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import compression.SndCmp;
+
 public class SoundSampleConverter {
 
 	private static final int RIFF_RIFF_SIG = 0x52494646;
@@ -29,8 +31,20 @@ public class SoundSampleConverter {
 		}
 	}
 
+	/*public static byte[] convertSoundSampleCWav(File source) {
+		try {
+			AzWave wave = new AzWave(source);
+
+			return wave.serializeCWav();
+		} catch (Exception e) {
+			System.err.println("Could not convert WAV file " + source + ". [" + e.getMessage() + "]");
+			return null;
+		}
+	}*/
+
 	public static class AzWave {
 		public static final String SIGNATURE = "AZWAVSND";
+		public static final String SIGNATURE_CWAV = "AZCW";
 
 		public int sampleRate;
 
@@ -101,6 +115,28 @@ public class SoundSampleConverter {
 				dos.writeInt(samples.length);
 
 				dos.write(samples);
+
+				dos.close();
+				return out.toByteArray();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+
+		public byte[] serializeCWav() {
+			try {
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+				DataOutputStream dos = new DataOutputStream(out);
+
+				dos.write(SIGNATURE_CWAV.getBytes(StandardCharsets.US_ASCII));
+				dos.writeShort(sampleRate);
+				dos.writeInt(samples.length);
+
+				byte[] compSamples = SndCmp.compress(samples);
+				dos.write(compSamples);
+				System.out.println("Compression ratio: " + (float) compSamples.length / (float) samples.length);
 
 				dos.close();
 				return out.toByteArray();

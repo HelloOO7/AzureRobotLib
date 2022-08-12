@@ -1,10 +1,12 @@
 package azure.bt;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
 import azure.common.AzInputStream;
+import lejos.nxt.Button;
 
 public class AzPacket {
 
@@ -14,9 +16,7 @@ public class AzPacket {
 	protected DataType[] bufferFormats;
 	protected Object[] values;
 
-	protected AzPacket(int valueCount) {
-		bufferFormats = new DataType[valueCount];
-		values = new DataType[valueCount];
+	protected AzPacket() {
 	}
 
 	public AzPacket(AzInputStream in) {
@@ -27,6 +27,41 @@ public class AzPacket {
 		}
 	}
 
+	public int sizeOf() {
+		if (bufferFormats.length != values.length) {
+			throw new RuntimeException("PkFmtErr1");
+		}
+		int len = AZURE_MAGIC.length() + 1 + bufferFormats.length + TERM_MAGIC.length();
+		int index = 0;
+		for (DataType t : bufferFormats) {
+			switch (t) {
+			case INT16:
+				len += 2;
+				break;
+			case INT32:
+				len += 4;
+				break;
+			case INT8:
+				len++;
+				break;
+			case STRING:
+				len += getUTFLen((String) values[index]);
+				break;
+			}
+			index++;
+		}
+		return len;
+	}
+
+	private int getUTFLen(String str) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream(str.length() + 10);
+		try {
+			new DataOutputStream(out).writeUTF(str);
+		} catch (IOException e) {
+		}
+		return out.size();
+	}
+
 	public void read(AzInputStream in) throws IOException {
 		byte[] buf = new byte[AZURE_MAGIC.length()];
 		in.read(buf);
@@ -35,7 +70,8 @@ public class AzPacket {
 			byte[] rest = new byte[in.available()];
 			in.read(rest);
 
-			throw new UnsupportedOperationException(Arrays.toString(buf) + Arrays.toString(rest) + " - The incoming data is not an Azure packet.");
+			throw new UnsupportedOperationException(
+					Arrays.toString(buf) + Arrays.toString(rest) + " - The incoming data is not an Azure packet.");
 		}
 
 		int bufferCount = in.read();
@@ -47,23 +83,26 @@ public class AzPacket {
 		for (int i = 0; i < bufferCount; i++) {
 			DataType data = bufferFormats[i];
 			switch (data) {
-				case INT16:
-					values[i] = in.readShort();
-					break;
-				case INT32:
-					values[i] = in.readInt();
-					break;
-				case INT8:
-					values[i] = in.readByte();
-					break;
-				case STRING:
-					values[i] = in.readUTF();
-					break;
+			case INT16:
+				values[i] = in.readShort();
+				break;
+			case INT32:
+				values[i] = in.readInt();
+				break;
+			case INT8:
+				values[i] = in.readByte();
+				break;
+			case STRING:
+				values[i] = in.readUTF();
+				break;
 			}
 		}
-
-		if (!in.getMagic(TERM_MAGIC)) {
-			throw new IllegalArgumentException("End of packet expected");
+		byte[] termBuf = new byte[TERM_MAGIC.length()];
+		in.read(termBuf);
+		String term = new String(termBuf);
+		if (!term.equals(TERM_MAGIC)) {
+			Button.waitForAnyPress();
+			throw new IllegalArgumentException("BADTERM " + termBuf[0] + '|' + termBuf[1] + '|' + termBuf[2] + '|' + termBuf[2]);
 		}
 	}
 
@@ -76,27 +115,24 @@ public class AzPacket {
 		for (int i = 0; i < values.length; i++) {
 			Object val = values[i];
 			switch (bufferFormats[i]) {
-				case INT8:
-					out.writeShort((Short) val);
-					break;
-				case INT16:
-					out.writeShort((Short) val);
-					break;
-				case INT32:
-					out.writeInt((Integer) val);
-					break;
-				case STRING:
-					out.writeUTF((String) val);
-					break;
+			case INT8:
+				out.write(((Number) val).byteValue());
+				break;
+			case INT16:
+				out.writeShort(((Number) val).shortValue());
+				break;
+			case INT32:
+				out.writeInt(((Number) val).intValue());
+				break;
+			case STRING:
+				out.writeUTF((String) val);
+				break;
 			}
 		}
 		out.write(TERM_MAGIC.getBytes());
 	}
 
 	public enum DataType {
-		STRING,
-		INT32,
-		INT16,
-		INT8
+		STRING, INT32, INT16, INT8
 	}
 }

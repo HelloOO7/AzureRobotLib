@@ -90,6 +90,8 @@ public class NGSoundSeqConverter {
 
 			Map<Integer, Float> notesNowPlaying = new HashMap<>();
 
+			boolean hasNote = false;
+
 			System.out.println("Begin track");
 			for (int i = 0; i < track.size(); i++) {
 				MidiEvent evt = track.get(i);
@@ -103,9 +105,9 @@ public class NGSoundSeqConverter {
 					switch (mesg[1]) {
 					case COMMAND_SET_TEMPO:
 						int tempo = getInt24(mesg, 3);
-						System.out.println("OLD TEMPO: " + currentTempoScale + " resol " + resolution);
+						//System.out.println("OLD TEMPO: " + currentTempoScale + " resol " + resolution);
 						currentTempoScale = tempo / defaultTickScale / 1000f;
-						System.out.println("BPM " + tempo + " scale " + currentTempoScale);
+						//System.out.println("BPM " + tempo + " scale " + currentTempoScale);
 						break;
 					default:
 						System.out.println("AZSEQ incompatible command " + mesg[1] + Arrays.toString(mesg));
@@ -126,6 +128,7 @@ public class NGSoundSeqConverter {
 						notesNowPlaying.remove(key);
 					}
 				} else if (cmd == 0x90 + channelNo) {
+					hasNote = true;
 					// NOTE ON
 					int key = mesg[1] & 0xFF;
 					float nowTime = evt.getTick() * currentTempoScale;
@@ -158,6 +161,11 @@ public class NGSoundSeqConverter {
 
 					commands.add(new AzSeqChangeInstrumentCmd(nowTime, index));
 				}
+			}
+
+			if (!hasNote) {
+				commands.clear();
+				return;
 			}
 
 			commands.sort(new Comparator<AzSeqCmd>() {

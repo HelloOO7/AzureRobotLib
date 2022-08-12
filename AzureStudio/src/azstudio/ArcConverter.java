@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Scanner;
 
 import compression.LZ11;
-import nxjupload.NXJFileSystem;
 
 /**
  * Converts a filesystem directory into an Azure-format archive.
@@ -56,6 +55,17 @@ public class ArcConverter {
 		for (ArcFileInfo i : files) {
 			if (ignores.contains(i.resourceName)) {
 				toRemove.add(i);
+			}
+			else {
+				String path = i.getFullResPath();
+				path = path.substring(("/" + args[0]).length());
+
+				for (String ign : ignores) {
+					if (ign.startsWith("/") && path.startsWith(ign)) {
+						toRemove.add(i);
+						break;
+					}
+				}
 			}
 		}
 		files.removeAll(toRemove);

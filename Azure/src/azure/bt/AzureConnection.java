@@ -1,5 +1,6 @@
 package azure.bt;
-import java.io.DataOutputStream;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,141 +9,63 @@ import java.util.Queue;
 import azure.bt.AzureConnection.ReceiverThread.PacketWrapper;
 import azure.bt.packets.DefaultPacket;
 import azure.common.AzInputStream;
-import lejos.nxt.comm.Bluetooth;
-import lejos.nxt.comm.NXTConnection;
-import lejos.nxt.comm.RS485;
 
-public class AzureConnection {
-	private final String target;
-
-	private NXTConnection con;
-
-	private DataOutputStream out;
-	private AzInputStream in;
-
-	private ReceiverThread recv;
-
-	private AzConnectionType type;
-
-	public AzureConnection(String target){
-		this(target, AzConnectionType.BLUETOOTH);
-	}
-
-	public AzureConnection(String target, AzConnectionType t){
-		this.target = target;
-		this.type = t;
-		recv = new ReceiverThread(this);
-		reopenConnection();
-		recv.start();
-	}
+public abstract class AzureConnection {
+	protected ReceiverThread recv;
 
 	public AzureConnection() {
-		this(AzConnectionType.BLUETOOTH);
-	}
-
-	public AzureConnection(AzConnectionType t){
-		target = null;
-		this.type = t;
 		recv = new ReceiverThread(this);
-		reopenConnection();
-		recv.start();
-	}
-
-	public static enum AzConnectionType {
-		BLUETOOTH,
-		RS485
-	}
-
-	public void reopenConnection() {
-		if (con != null) {
-			try {
-				close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		if (target == null) {
-			if (type == AzConnectionType.BLUETOOTH) {
-				con = Bluetooth.waitForConnection(0, NXTConnection.RAW);
-			}
-			else {
-				con = RS485.waitForConnection(0, NXTConnection.RAW);
-			}
-			openStreams();
-		}
-		else {
-			if (type == AzConnectionType.BLUETOOTH) {
-				con = Bluetooth.connect(target, NXTConnection.RAW);
-			}
-			else {
-				con = RS485.connect(target, NXTConnection.RAW);
-			}
-			openStreams();
-		}
-
-		if (con == null) {
-			throw new RuntimeException("Failed to connect!");
-		}
 	}
 
 	public void addRecvListener(AzureConnectionRecvListener l) {
 		recv.addRecvListener(l);
 	}
 
-	private void openStreams(){
-		if (con != null){
-			out = con.openDataOutputStream();
-			in = new AzInputStream(con.openInputStream());
-			recv.bindInputStream(in);
-		}
-	}
+	public abstract String getPartnerName();
 
-	public boolean getIsConnected(){
-		return con != null;
-	}
+	public abstract boolean getIsConnected();
 
-	public int send(String str) throws IOException{
+	public int send(String str) throws IOException {
 		DefaultPacket pkt = new DefaultPacket(str);
 
-		out.flush();
-		out.write(0);
-		pkt.send(out);
-		long start = System.currentTimeMillis();
-		out.flush();
-
-		return (int)(System.currentTimeMillis() - start);
+		return send(0, pkt);
 	}
 
-	public void close() throws IOException {
-		con.close();
-	}
+	public abstract int send(int type, AzPacket packet) throws IOException;
 
-	public void waitForMessage(){
-		while (recv.data.isEmpty()){
+	public abstract void close() throws IOException;
+
+	public void waitForMessage() {
+		while (recv.data.isEmpty()) {
 			Thread.yield();
 		}
 	}
 
-	public String nextMessage(){
-		if (recv.data.isEmpty()){
-			return null;
-		}
-		PacketWrapper w = (PacketWrapper) recv.data.pop();
-		if (w.packetClass == DefaultPacket.class){
-			return ((DefaultPacket)w.packet).getMessage();
+	public String nextMessage() {
+		PacketWrapper w = nextPacket();
+		if (w.packetTypeId == 0) {
+			DefaultPacket def = new DefaultPacket(w.dataAsStream());
+			return def.getMessage();
 		}
 		return null;
 	}
 
+	public PacketWrapper nextPacket() {
+		if (recv.data.isEmpty()) {
+			return null;
+		}
+		return (PacketWrapper) recv.data.pop();
+	}
+
 	public long getNextMessageTime() {
-		if (recv.data.isEmpty()){
+		if (recv.data.isEmpty()) {
 			return -1;
 		}
 		PacketWrapper w = (PacketWrapper) recv.data.peek();
 		return w.timestamp;
 	}
 
-	public static class ReceiverThread extends Thread{
+	public static class ReceiverThread extends Thread {
 		private boolean exited = false;
 		private AzInputStream in = null;
 		private AzureConnection con;
@@ -161,69 +84,75 @@ public class AzureConnection {
 			}
 		}
 
-		public void bindInputStream(AzInputStream in){
+		public void bindInputStream(AzInputStream in) {
 			invalidate();
 			this.in = in;
 		}
 
-		public void invalidate(){
+		public void invalidate() {
 			in = null;
 			data.clear();
 		}
 
 		@Override
-		public void run(){
+		public void run() {
 			try {
-				while (!exited){
-					if (in == null){
+				while (!exited) {
+					if (in == null) {
 						continue;
 					}
+					int packetSize = in.readUnsignedShort();
 					int packetFormat = in.read();
 					long recvTime = System.currentTimeMillis();
-					switch (packetFormat){
-						case 0:
-							try {
-							PacketWrapper packet = PacketWrapper.wrap(
-									DefaultPacket.class,
-									new DefaultPacket(in)
-							);
+
+					if (packetFormat != -1) {
+						try {
+							if (packetSize > Runtime.getRuntime().freeMemory()) {
+								throw new OutOfMemoryError("PkSize: " + packetSize);
+							}
+							byte[] buf = new byte[packetSize];
+							in.read(buf);
+							PacketWrapper packet = PacketWrapper.wrap(packetFormat, buf);
 							packet.timestamp = recvTime;
-							data.addElement(packet);
-							for (AzureConnectionRecvListener l : listeners) {
-								l.onPacketReceived(packet);
+							if (!listeners.isEmpty()) {
+								for (AzureConnectionRecvListener l : listeners) {
+									l.onPacketReceived(packet);
+								}
+							} else {
+								data.addElement(packet);
 							}
-							} catch (UnsupportedOperationException ex) {
-								System.out.println("Sender: " + con.target);
-								System.out.println(ex.getMessage());
-							}
-							break;
-						case -1:
-							exited = true;
-							break;
-						default:
-							throw new IllegalArgumentException(packetFormat + ": Invalid packet class.");
+						} catch (UnsupportedOperationException ex) {
+							System.out.println("Sender: " + con.getPartnerName());
+							System.out.println(ex.getMessage());
+						}
+					} else {
+						exited = true;
 					}
 				}
-			} catch (IOException ex){
+			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
 		}
 
-		public void shutdown(){
+		public void shutdown() {
 			exited = true;
 		}
 
-		public static class PacketWrapper{
+		public static class PacketWrapper {
 			public long timestamp;
 
-			public Class<? extends AzPacket> packetClass;
-			public AzPacket packet;
+			public int packetTypeId;
+			public byte[] packetData;
 
-			public static PacketWrapper wrap(Class<? extends AzPacket> pc, AzPacket p){
+			public static PacketWrapper wrap(int typeId, byte[] data) {
 				PacketWrapper w = new PacketWrapper();
-				w.packetClass = pc;
-				w.packet = p;
+				w.packetTypeId = typeId;
+				w.packetData = data;
 				return w;
+			}
+
+			public AzInputStream dataAsStream() {
+				return new AzInputStream(new ByteArrayInputStream(packetData));
 			}
 		}
 	}

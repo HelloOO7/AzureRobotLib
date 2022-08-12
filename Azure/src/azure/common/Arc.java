@@ -35,6 +35,10 @@ public class Arc {
 		}
 	}
 
+	public File getFlashFile() {
+		return origin;
+	}
+
 	public int getPageForOffset(int offset) {
 		return origin.getPage() + offset / Flash.BYTES_PER_PAGE;
 	}

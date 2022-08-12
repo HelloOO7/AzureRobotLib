@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import azure.common.Arc;
 import azure.common.AzInputStream;
+import azure.util.NativeFlash;
 import azure.common.Arc.ArcFileInfo;
 
 public class AzWave {
@@ -44,10 +45,16 @@ public class AzWave {
 		return sampleRate;
 	}
 
-    static native void playSample(int page, int offset, int len, int freq, int vol);
+    public static native void playFreq(int aFrequency, int aDuration, int aVolume);
+    public static native void playSample(int page, int offset, int len, int freq, int vol);
+    public static native int playQueuedSample(byte[] data, int offset, int len, int freq, int vol);
 
     public int getLenMillis() {
     	return getLenMillis(sampleCount);
+    }
+
+    public int getLenSamples() {
+    	return sampleCount;
     }
 
     public int getLenMillis(int lenSamples) {
@@ -56,6 +63,10 @@ public class AzWave {
 
     public int getLenSamples(int millis) {
     	return (millis * sampleRate) / 1000;
+    }
+
+    public int playRange(int first, int count, int freq, int volume) {
+    	return playQueuedSample(null, NativeFlash.getFlashRawAddress(page, offset + first), count, freq, volume);
     }
 
 	public void play(float speed, int volume, int maxLenMillis) {

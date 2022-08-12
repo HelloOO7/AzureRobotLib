@@ -13,7 +13,9 @@ import lejos.nxt.LCD;
 public abstract class AzLayout {
 	private List<ILayoutDrawable> drawables = new ArrayList<>();
 
-	public abstract String getResourceRoot();
+	public String getResourceRoot() {
+		return null;
+	}
 
 	public void add(ILayoutDrawable d, String id) {
 		d.name = id;
