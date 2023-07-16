@@ -19,6 +19,6 @@ public class LayoutImage extends ILayoutDrawable{
 
 	@Override
 	public void draw() {
-		LayoutGraphics.g.drawImage(img, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+		LayoutGraphics.INSTANCE.drawImage(img, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 	}
 }

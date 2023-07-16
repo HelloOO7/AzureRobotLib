@@ -1,6 +1,5 @@
 package azure.lyt.elements;
 
-import azure.common.ResourceManager;
 import azure.lyt.LayoutFont;
 import azure.lyt.LayoutGraphics;
 
@@ -9,7 +8,7 @@ public class Label extends ILayoutDrawable{
 	private LayoutFont font;
 
 	public Label(String text){
-		this(text, ResourceManager.getDefaultFont());
+		this(text, null);
 	}
 
 	public Label(String text, LayoutFont font){
@@ -23,6 +22,6 @@ public class Label extends ILayoutDrawable{
 
 	@Override
 	public void draw() {
-		LayoutGraphics.g.drawString(font, text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+		LayoutGraphics.INSTANCE.drawString(font, text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 	}
 }

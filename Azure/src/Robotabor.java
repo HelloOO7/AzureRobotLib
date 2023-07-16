@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2022.2
+ * @version 2023.1
  */
 public class Robotabor {
 
@@ -910,7 +910,7 @@ public class Robotabor {
 			 */
 			float alfa = deg * _L * invR;
 			/* to je totez, ale da to min prace spocitat */
-			rotateInternal(alfa, -alfa, non_blocking);
+			rotateInternal(-alfa, alfa, non_blocking);
 		}
 
 		/**

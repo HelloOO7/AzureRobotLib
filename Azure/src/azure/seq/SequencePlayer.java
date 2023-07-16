@@ -52,7 +52,7 @@ public class SequencePlayer {
 	 */
 	public static InputStream getAzSeqForNameAndChannel(String name, int channel) {
 		String fullName = SDAT_ROOT + name + ".mid/channel" + channel + ".azseq";
-		return ResourceManager.lyArc.getFileAsStream(fullName);
+		return ResourceManager.getResource(fullName).openStream();
 	}
 
 	/**

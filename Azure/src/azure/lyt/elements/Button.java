@@ -22,10 +22,10 @@ public abstract class Button extends ILayoutDrawable{
 		@Override
 		public void draw(){
 			if (!isSelected){
-				LayoutGraphics.g.drawString(text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+				LayoutGraphics.INSTANCE.drawString(text, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 			else {
-				LayoutGraphics.g.drawString(">" + text, x - 4, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+				LayoutGraphics.INSTANCE.drawString(">" + text, x - 4, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 		}
 
@@ -45,10 +45,10 @@ public abstract class Button extends ILayoutDrawable{
 		@Override
 		public void draw(){
 			if (!isSelected){
-				LayoutGraphics.g.drawImage(idle, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+				LayoutGraphics.INSTANCE.drawImage(idle, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 			else {
-				LayoutGraphics.g.drawImage(highlighted, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
+				LayoutGraphics.INSTANCE.drawImage(highlighted, x, y, LayoutGraphics.ANCHOR_TOP_LEFT);
 			}
 		}
 	}

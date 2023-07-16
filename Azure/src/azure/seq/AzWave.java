@@ -2,10 +2,9 @@ package azure.seq;
 
 import java.io.IOException;
 
-import azure.common.Arc;
 import azure.common.AzInputStream;
+import azure.common.ResourceManager.Resource;
 import azure.util.NativeFlash;
-import azure.common.Arc.ArcFileInfo;
 
 public class AzWave {
 
@@ -18,14 +17,12 @@ public class AzWave {
 	private int sampleRate;
 	private int sampleCount;
 
-	public AzWave(Arc arc, ArcFileInfo fileInfo) {
-		int rawWaveOffset = fileInfo.resourceDataOffset + HEADER_LENGTH;
-
-		page = arc.getPageForOffset(rawWaveOffset);
-		offset = arc.getOffsetInPage(rawWaveOffset);
+	public AzWave(Resource res) {
+		page = res.getPage(HEADER_LENGTH);
+		offset = res.getOffsetInPage(HEADER_LENGTH);
 
 		try {
-			AzInputStream dis = new AzInputStream(arc.getFileAsStream(fileInfo));
+			AzInputStream dis = new AzInputStream(res.openStream());
 
 			if (!dis.getMagic(SIGNATURE)) {
 				dis.close();

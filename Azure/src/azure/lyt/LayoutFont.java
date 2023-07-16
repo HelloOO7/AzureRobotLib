@@ -1,7 +1,7 @@
 package azure.lyt;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 import javax.microedition.lcdui.Image;
@@ -19,9 +19,9 @@ public class LayoutFont {
 	public int glyphWidth;
 	public int cellWidth;
 
-	public LayoutFont(byte[] source){
+	public LayoutFont(InputStream stream){
 		try {
-			AzInputStream in = new AzInputStream(new ByteArrayInputStream(source));
+			AzInputStream in = new AzInputStream(stream);
 			if (!in.getMagic(AZURE_FONT_MAGIC)){
 				in.close();
 				throw new IllegalArgumentException("Source is not an Azure font file.");
@@ -36,7 +36,6 @@ public class LayoutFont {
 
 			in.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -18,10 +18,10 @@ public class TestingRuntime {
 	 */
 	public static void archiveTest(){
 		ResourceManager.init();
-		for (ArcFileInfo info : ResourceManager.lyArc.files){
+		/*for (ArcFileInfo info : ResourceManager.lyArc.files){
 			System.out.println(info.getFullResourceName());
 			Button.waitForAnyPress();
-		}
+		}*/
 		Button.waitForAnyPress();
 	}
 
@@ -29,7 +29,7 @@ public class TestingRuntime {
 	 * Server-side method for Bluetooth comm test.
 	 */
 	public static void sendTest(){
-		AzureConnection con = new AzureNXTConnection("BLUE");
+		AzureConnection con = new AzureBTConnection("BLUE");
 		try {
 			System.out.println("Connection established, sending");
 			con.send("test");
@@ -44,7 +44,7 @@ public class TestingRuntime {
 	 * Client-side method for Bluetooth comm test.
 	 */
 	public static void recvTest(){
-		AzureConnection con = new AzureNXTConnection();
+		AzureConnection con = new AzureBTConnection();
 		System.out.println("Connection established");
 		con.waitForMessage();
 		String read = con.nextMessage();

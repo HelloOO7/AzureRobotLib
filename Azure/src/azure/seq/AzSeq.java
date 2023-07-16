@@ -111,7 +111,7 @@ public class AzSeq {
 		}
 
 		public void setInstrument(int index) {
-			currentInstrument = new AzWave(ResourceManager.lyArc, ResourceManager.lyArc.getFileDescriptor("/sdat/sample/" + instrumentNames.get(index) + ".wav"));
+			currentInstrument = new AzWave(ResourceManager.getResource("/sdat/sample/" + instrumentNames.get(index) + ".wav"));
 		}
 	}
 
