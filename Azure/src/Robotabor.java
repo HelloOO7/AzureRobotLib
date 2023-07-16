@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2023.1
+ * @version 2023.2
  */
 public class Robotabor {
 
@@ -182,7 +182,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(boolean b) {
-		System.out.print(b);
+		System.out.println(b);
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(char c) {
-		System.out.print(c);
+		System.out.println(c);
 	}
 
 	/**
@@ -202,7 +202,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(int i) {
-		System.out.print(i);
+		System.out.println(i);
 	}
 
 	/**
@@ -212,7 +212,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(long l) {
-		System.out.print(l);
+		System.out.println(l);
 	}
 
 	/**
@@ -222,7 +222,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(float f) {
-		System.out.print(f);
+		System.out.println(f);
 	}
 
 	/**
@@ -232,7 +232,7 @@ public class Robotabor {
 	 *            co chci vytisnkout
 	 */
 	public static void print(double d) {
-		System.out.print(d);
+		System.out.println(d);
 	}
 
 	/**
@@ -242,7 +242,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(char[] a) {
-		System.out.print(a);
+		System.out.println(a);
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(String s) {
-		System.out.print(s);
+		System.out.println(s);
 	}
 
 	/**
@@ -262,7 +262,7 @@ public class Robotabor {
 	 *            co chci vytisknout
 	 */
 	public static void print(Object o) {
-		System.out.print(o);
+		System.out.println(o);
 	}
 
 	/**
@@ -472,7 +472,7 @@ public class Robotabor {
 	 * @param senzory Varags senzoru. Prvni parametr je port 1, druhy port 2 atd.
 	 */
 	public static void init(Sensor... senzory) {
-		print("EasyRobotLibrary v 2021.5\n");
+		print("EasyRobotLibrary v 2023.2\n");
 
 		_light_ct = 1;
 		_touch_ct = 1;
@@ -631,18 +631,14 @@ public class Robotabor {
 			if (white_level <= black_level) {
 				beep();
 				sleepMilliseconds(120);
-				debugPrint("selhani kalibrace\n");
+				debugPrint("selhani kalibrace");
 				beep();
 				sleepMilliseconds(20);
 				beep();
 				getButton();
 				getButton();
 			}
-			debugPrint("B=");
-			debugPrint(black_level);
-			debugPrint(" W=");
-			debugPrint(white_level);
-			debugPrint("\n");
+			debugPrint("B=" + black_level + " W=" + white_level);
 		}
 
 		public void recalibrateOnWhite() {
@@ -679,9 +675,7 @@ public class Robotabor {
 			follow_d = d;
 			forward_speed = buggy.motL.getSpeed(); // pripadne
 													// *sgn(target_distance)
-			debugPrint("forward speed=");
-			debugPrint(forward_speed);
-			debugPrint("\n");
+			debugPrint("forward speed=" + forward_speed);
 			sleepMilliseconds(250);
 			last_time = elapsedMilliseconds();
 			last_e = getOfftrackValue();
@@ -739,7 +733,7 @@ public class Robotabor {
 				float rs = RAD_TO_DEG * (forward_speed * (1 + a * buggy.way) * buggy.invR);
 				ls = common_clamp5_450(ls);
 				rs = common_clamp5_450(rs);
-				debugPrint("a=" + a + " acce=" + acc_e + " \r");
+				debugPrint("a=" + a + " acce=" + acc_e);
 				buggy.setSpeedInternal(ls, rs);
 			}
 			last_time = now;
