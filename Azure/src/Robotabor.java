@@ -1,3 +1,5 @@
+package eevee;
+
 import lejos.nxt.*;
 import lejos.util.Stopwatch;
 
@@ -5,7 +7,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2023.2
+ * @version 2023.3
  */
 public class Robotabor {
 
@@ -472,7 +474,7 @@ public class Robotabor {
 	 * @param senzory Varags senzoru. Prvni parametr je port 1, druhy port 2 atd.
 	 */
 	public static void init(Sensor... senzory) {
-		print("EasyRobotLibrary v 2023.2\n");
+		print("EasyRobotLibrary v 2023.3\n");
 
 		_light_ct = 1;
 		_touch_ct = 1;
@@ -774,7 +776,7 @@ public class Robotabor {
 			RAD_TO_DEG_invR = RAD_TO_DEG * invR;
 			speed(1000);
 		}
-
+ 
 		private float way = 0f;
 		/* 1 vpred (mm>0), -1 vzad (mm<0) */
 		private float target_dist;
@@ -884,6 +886,51 @@ public class Robotabor {
 			}
 			setSpeedBothInternal(initialVelocity);
 			way = 0f;
+		}
+		
+		static float _1_360 = 1f / 360f;
+		
+		private void arc(float left_mm, float right_mm, float dist, boolean nonBlocking) {
+			float speed = motL.getSpeed();
+			way = (int) Math.signum(right_mm);
+			motR.resetTachoCount();
+			motL.resetTachoCount();
+			float time = dist / speed;
+			motL.origsetSpeed(left_mm / time);
+			motR.origsetSpeed(right_mm / time);
+			rotateInternal(left_mm * RAD_TO_DEG_invR, right_mm * RAD_TO_DEG_invR, nonBlocking);
+			motL.origsetSpeed(speed);
+			motR.origsetSpeed(speed);
+		}
+		
+		public void arcLeft(float radius, float angle, boolean non_blocking) {
+			arc(
+					arcCircumference(radius - _L, angle),
+					arcCircumference(radius + _L, angle),
+					arcCircumference(radius, angle),
+					non_blocking
+			);
+		}
+		
+		public void arcRight(float radius, float angle, boolean non_blocking) {
+			arc(
+					arcCircumference(radius + _L, angle),
+					arcCircumference(radius - _L, angle),
+					arcCircumference(radius, angle),
+					non_blocking
+			);
+		}
+
+		public void arcLeft(float radius, float angle) {
+			arcLeft(radius, angle, false);
+		}
+
+		public void arcRight(float radius, float angle) {
+			arcRight(radius, angle, false);
+		}
+		
+		private static float arcCircumference(float r, float a) {
+			return (float)(2 * Math.PI * Math.abs(r) * (a * _1_360));
 		}
 
 		/**
