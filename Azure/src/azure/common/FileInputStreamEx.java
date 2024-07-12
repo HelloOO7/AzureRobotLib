@@ -49,6 +49,10 @@ public class FileInputStreamEx extends InputStream {
 		this.page_low = pnum * Flash.BYTES_PER_PAGE;
 		this.page_high = this.page_low + Flash.BYTES_PER_PAGE;
 	}
+	
+	public void setFileLimit(int limit) {
+		file_limit = limit;
+	}
 
 	@Override
 	public int read() throws IOException {

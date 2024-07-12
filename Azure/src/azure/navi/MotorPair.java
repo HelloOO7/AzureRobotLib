@@ -44,6 +44,11 @@ public class MotorPair {
 		engineL.setSpeed(degps);
 		engineR.setSpeed(degps);
 	}
+	
+	public void setEngineSpeedSeparateMmps(float mmpsL, float mmpsR) {
+		engineL.setSpeed((float) Math.toDegrees(mmpsL / radius));
+		engineR.setSpeed((float) Math.toDegrees(mmpsR / radius));
+	}
 
 	/**
 	 * Sets constants required for accurate turning emulation.
@@ -138,6 +143,10 @@ public class MotorPair {
 
 	public int getAcceleration() {
 		return engineL.getAcceleration();
+	}
+	
+	public int getSpeed() {
+		return engineL.getSpeed();
 	}
 
 	/**

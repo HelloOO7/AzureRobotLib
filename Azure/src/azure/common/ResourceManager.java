@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 
 import javax.microedition.lcdui.Image;
 
@@ -20,8 +17,8 @@ public class ResourceManager {
 
 	private static final String AZURE_DEFAULT_RESOURCE = "azure_resources.arc";
 
-	private static Map<String, File> mountedArcs = new HashMap<>();
-	private static Map<String, Resource> resources = new HashMap<>();
+	private static EqualsMap<String, File> mountedArcs = new EqualsMap<>();
+	private static EqualsMap<String, Resource> resources = new EqualsMap<>();
 
 	private static LayoutFont defaultLayoutFont;
 
@@ -38,15 +35,22 @@ public class ResourceManager {
 	}
 
 	public static void mountArchive(String archivePath) {
+		mountArchive(archivePath, false);
+	}
+	
+	public static void mountArchive(String archivePath, boolean mountAsRoot) {
 		if (!isArchiveReady(archivePath)) {
 			File file = new File(archivePath);
 			if (file.exists()) {
 				Arc arc = new Arc(file);
 				File baseFile = arc.getFlashFile();
+				ArcFileInfo root = mountAsRoot ? arc.files.get(0) : null;
 				for (ArcFileInfo fi : arc.files) {
+					if (fi.parentResource == root) {
+						fi.parentResource = null;
+					}
 					resources.put(fi.getFullResourceName(), new Resource(baseFile, fi.resourceDataOffset, fi.resourceDataLength));
 				}
-				mountedArcs.put(archivePath, baseFile);
 				arc = null;
 				System.gc();
 			} else {
@@ -64,7 +68,7 @@ public class ResourceManager {
 	}
 
 	public static void init() {
-		mountArchive(AZURE_DEFAULT_RESOURCE);
+		mountArchive(AZURE_DEFAULT_RESOURCE, true);
 		defaultLayoutFont = new LayoutFont(getResource("/AzLytStd.azfnt").openStream());
 	}
 
@@ -131,6 +135,7 @@ public class ResourceManager {
 				FileInputStreamEx stream;
 				stream = new FileInputStreamEx(file);
 				stream.seek(offset);
+				stream.setFileLimit(offset + length);
 				return stream;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();

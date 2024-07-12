@@ -64,7 +64,11 @@ public class EqualsMap<K, V> implements Map<K, V>{
 
 	@Override
 	public V get(Object key) {
-		return values.get(keys.indexOf(key));
+		int idx = keys.indexOf(key);
+		if (idx == -1) {
+			return null;
+		}
+		return values.get(idx);
 	}
 
 	@Override

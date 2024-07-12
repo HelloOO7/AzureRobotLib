@@ -1,5 +1,3 @@
-package eevee;
-
 import lejos.nxt.*;
 import lejos.util.Stopwatch;
 
@@ -7,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2023.3
+ * @version 2024.1
  */
 public class Robotabor {
 
@@ -963,22 +961,39 @@ public class Robotabor {
 		public void turn(float deg) {
 			turn(deg, false);
 		}
+		
+		private void startLeftMotor(boolean backward) {
+			if (backward ^ (dir == MotorDirection.INVERSE)) {
+				motL.backward();
+			}
+			else {
+				motL.forward();
+			}
+		}
+		
+		private void startRightMotor(boolean backward) {
+			if (backward ^ (dir == MotorDirection.INVERSE ^ sync == MotorInterwork.COUNTER)) {
+				motR.backward();
+			}
+			else {
+				motR.forward();
+			}
+		}
 
 		/**
 		 * Zacne se otacet vlevo.
 		 */
 		public void turn() {
-
-			motL.forward();
-			motR.backward();
+			startLeftMotor(false);
+			startRightMotor(true);
 		}
 
 		/**
 		 * Rozjede se dopredu
 		 */
 		public void forward() {
-			motL.forward();
-			motR.forward();
+			startLeftMotor(false);
+			startRightMotor(false);
 			way = 1f;
 		}
 
@@ -986,8 +1001,8 @@ public class Robotabor {
 		 * Rozjede se dozadu
 		 */
 		public void backward() {
-			motL.backward();
-			motR.backward();
+			startLeftMotor(true);
+			startRightMotor(true);
 			way = -1f;
 		}
 

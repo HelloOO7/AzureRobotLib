@@ -48,6 +48,11 @@ public class LightSensorController {
 		Button.waitForAnyPress();
 		lyt.callSequence("clyt_hide");
 	}
+	
+	public void calibrate(int pri, int sec) {
+		this.primaryColor = (short)pri;
+		this.secondaryColor = (short)sec;
+	}
 
 	/**
 	 * Gets the sensor value with floodlight on.
