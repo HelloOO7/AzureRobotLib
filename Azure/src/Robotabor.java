@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2024.1
+ * @version 2024.2
  */
 public class Robotabor {
 
@@ -981,11 +981,19 @@ public class Robotabor {
 		}
 
 		/**
-		 * Zacne se otacet vlevo.
+		 * Zacne se otacet vpravo.
 		 */
 		public void turn() {
 			startLeftMotor(false);
 			startRightMotor(true);
+		}
+
+		/**
+		 * Zacne se otacet vpravo.
+		 */
+		public void turnLeft() {
+			startLeftMotor(true);
+			startRightMotor(false);
 		}
 
 		/**
