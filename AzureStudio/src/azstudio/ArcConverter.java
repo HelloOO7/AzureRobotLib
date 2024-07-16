@@ -95,7 +95,7 @@ public class ArcConverter {
 			}
 			out.close();
 
-			LZ11.compressFile(output);
+			//LZ11.compressFile(output);
 
 			ArcSync.sendAzarcToNxt(output);
 		} catch (IOException e) {
@@ -125,7 +125,7 @@ public class ArcConverter {
 						seqDir.resourceName = i.resourceName;
 						target.add(seqDir);
 
-						byte[][] chdata = NGSoundSeqConverter.convertToMultiChannel(f);
+						byte[][] chdata = NGSoundSeqConverter2.convertToMultiChannel(f);
 						i.resourceName = "channel0.azseq";
 						i.parentResource = seqDir;
 						i.origin = chdata[0];
@@ -183,12 +183,29 @@ public class ArcConverter {
 		public int resourceDataOffset = -1;
 		public int resourceDataLength = 0;
 
+		public static ArcFileInfo read(AzInputStream dis, List<ArcFileInfo> tree) throws IOException {
+			ArcFileInfo i = new ArcFileInfo();
+			i.isDirectory = dis.read() == 1;
+			i.resourceName = dis.readString();
+			int pidx = dis.readShort();
+			if (pidx != -1){
+				i.parentResource = tree.get(pidx);
+			}
+			if (!i.isDirectory) {
+				i.resourceDataOffset = dis.readInt();
+				i.resourceDataLength = dis.readUnsignedShort();
+			}
+			return i;
+		}
+
 		public void write(DataOutputStream out, List<ArcFileInfo> library) throws IOException {
 			out.write(isDirectory ? 1 : 0);
 			StringUtils.writeString(out, resourceName);
 			out.writeShort(library.indexOf(parentResource));
-			out.writeInt(resourceDataOffset);
-			out.writeShort(resourceDataLength);
+			if (!isDirectory) {
+				out.writeInt(resourceDataOffset);
+				out.writeShort(resourceDataLength);
+			}
 		}
 
 		public String getFullResPath() {
