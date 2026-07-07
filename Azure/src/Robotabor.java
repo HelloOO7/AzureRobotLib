@@ -5,7 +5,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2025.7
+ * @version 2026.1
  */
 public class Robotabor {
 
@@ -22,32 +22,28 @@ public class Robotabor {
 		/**
 		 * zadny sensor
 		 */
-		NONE,
-		TOUCH,
+		NONE, TOUCH,
 		/**
 		 * <h1>Priklad pouziti</h1>
 		 *
-		 * Pristup k prvnimu sensoru pres light1, k dalsim s vyssim cislem (jde
-		 * o pocet pouzitych stejnych sensoru, ne o zapojeni do portu). </br>
+		 * Pristup k prvnimu sensoru pres light1, k dalsim s vyssim cislem (jde o pocet
+		 * pouzitych stejnych sensoru, ne o zapojeni do portu). </br>
 		 * </br>
 		 *
-		 * <b>light1.readNormalizedValue()</b> vrati 0 (tma) az 1023 (nejvetsi
-		 * svetlo) <br/>
+		 * <b>light1.readNormalizedValue()</b> vrati 0 (tma) az 1023 (nejvetsi svetlo)
+		 * <br/>
 		 * <b>light1.setFloodlight(true)</b> rozsviti cervene svetlo<br/>
 		 * <b>light1.setFloodlight(false)</b> zhasne cervene svetlo<br/>
 		 */
-		LIGHT,
-		SONAR
+		LIGHT, SONAR
 	}
 
 	public static enum MotorDirection {
-		FORWARD,
-		INVERSE
+		FORWARD, INVERSE
 	}
 
 	public static enum MotorInterwork {
-		TANDEM,
-		COUNTER
+		TANDEM, COUNTER
 	}
 
 	/* Matematicke funkce a konstanty */
@@ -207,7 +203,7 @@ public class Robotabor {
 	public static final float PI = 3.141592653589f;
 	public static final float RAD2DEG = 180f / PI;
 	public static final float DEG2RAD = PI / 180f;
-	public static final float max_speed = 2850; // maximalni rychlost [deg/s] pro go, turn a sledovani cary
+	public static final float MAX_SPEED_DPS = 2850; // maximalni rychlost [deg/s] pro go, turn a sledovani cary
 
 	/******************* Ovladani motoru */
 
@@ -216,7 +212,7 @@ public class Robotabor {
 			STOP, BWD, FWD
 		}
 
-		private MotorState last_state;
+		private MotorState lastState;
 
 		/**
 		 * Vytvori instanci motoru
@@ -225,7 +221,7 @@ public class Robotabor {
 		 */
 		public NXTRegMotor(MotorPort b) {
 			super(b);
-			last_state = MotorState.STOP;
+			lastState = MotorState.STOP;
 		}
 
 		/**
@@ -239,27 +235,23 @@ public class Robotabor {
 		 *                     nulova.
 		 */
 		public void setSpeed(int degPerSecond) {
-			set_speed(degPerSecond);
-		}
-
-		public void set_speed(int degPerSecond) {
 			if (degPerSecond == 0) {
-				if (last_state != MotorState.STOP) {
-					last_state = MotorState.STOP;
+				if (lastState != MotorState.STOP) {
+					lastState = MotorState.STOP;
 					super.stop(true);
 				}
 			} else if (degPerSecond > 0) {
-				if (last_state != MotorState.FWD) {
+				if (lastState != MotorState.FWD) {
 					forward();
 				}
 				super.setSpeed(degPerSecond);
-				last_state = MotorState.FWD;
+				lastState = MotorState.FWD;
 			} else {
-				if (last_state != MotorState.BWD) {
+				if (lastState != MotorState.BWD) {
 					backward();
 				}
 				super.setSpeed(-degPerSecond);
-				last_state = MotorState.BWD;
+				lastState = MotorState.BWD;
 			}
 		}
 
@@ -286,7 +278,7 @@ public class Robotabor {
 		 *                  k zastaveni
 		 */
 		public void brake(boolean immediate) {
-			last_state = MotorState.STOP;
+			lastState = MotorState.STOP;
 			super.stop(immediate);
 		}
 
@@ -298,7 +290,7 @@ public class Robotabor {
 		 * Zastav motor, nech prirozene dojet
 		 */
 		public void neutral(boolean immediate) {
-			last_state = MotorState.STOP;
+			lastState = MotorState.STOP;
 			super.flt(immediate);
 		}
 
@@ -309,93 +301,29 @@ public class Robotabor {
 
 	/* Vstup/vystup (klavesnice, obrazovka) */
 
-	/**
-	 * Vytiskni hodnotu (ruznych typu)
-	 *
-	 * @param b co chci vytisknout
+	/*
+	 * poznamka k print/println: z hlediska vykonu neni optimalni brat jako parametr
+	 * Object, protoze se musi provest autoboxing. vysledky jsou nicmene stejne a
+	 * mene funkci bude delat mensi neporadek v code completion v IDE, co deti
+	 * pouzivaji.
 	 */
-	public static void print(boolean b) {
-		System.out.print(b);
-	}
 
 	/**
 	 * Vytiskni hodnotu
 	 *
-	 * @param c
-	 *            co chci vytisknout
-	 */
-	public static void print(char c) {
-		System.out.print(c);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param i
-	 *            co chci vytisknout
-	 */
-	public static void print(int i) {
-		System.out.print(i);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param l
-	 *            co chci vytisknout
-	 */
-	public static void print(long l) {
-		System.out.print(l);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param f
-	 *            co chci vytisknout
-	 */
-	public static void print(float f) {
-		System.out.print(f);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param d
-	 *            co chci vytisnkout
-	 */
-	public static void print(double d) {
-		System.out.print(d);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param a
-	 *            co chci vytisknout
-	 */
-	public static void print(char[] a) {
-		System.out.print(a);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param s
-	 *            co chci vytisknout
-	 */
-	public static void print(String s) {
-		System.out.print(s);
-	}
-
-	/**
-	 * Vytiskni hodnotu
-	 *
-	 * @param o
-	 *            co chci vytisknout
+	 * @param o co chci vytisknout
 	 */
 	public static void print(Object o) {
 		System.out.print(o);
+	}
+
+	/**
+	 * Vytiskni hodnotu a ukonci radek
+	 *
+	 * @param o co chci vytisknout
+	 */
+	public static void println(Object o) {
+		System.out.println(o);
 	}
 
 	public static void flush() {
@@ -421,10 +349,6 @@ public class Robotabor {
 		return 0;
 	}
 
-	public static int ms_sleep(int miliseconds) {
-		return sleepMilliseconds(miliseconds);
-	}
-
 	public static int msSleep(int miliseconds) {
 		return sleepMilliseconds(miliseconds);
 	}
@@ -445,12 +369,8 @@ public class Robotabor {
 		return _TT.elapsed();
 	}
 
-	public static int ms_time() {
-		return _TT.elapsed();
-	} // pro kompatibilitu se starou verzi
-
 	public static int msTime() {
-		return _TT.elapsed();
+		return elapsedMilliseconds();
 	}
 
 	/**
@@ -474,23 +394,14 @@ public class Robotabor {
 		return Button.readButtons();
 	}
 
-	public static int getb() {
-		Button.waitForAnyPress();
-		return Button.readButtons();
-	}
-
-	public static int readb() {
-		return Button.readButtons();
-	} // opet verze pro kompatibilitu
-
 	/**
 	 * Nasledujici 2 funkce zkontroluji, jestli tlacitkovy kod getb_code vraceny
 	 * funkci readButton() nebo getButton() obsahuje vsechna tlacitka v kombinaci
 	 * (funkce allButtons()) nebo nektera z nich (funkce anyButton()). Kombinace se
 	 * zadava jako soucet tlacitek. Napr.
 	 *
-	 * if(allButtons(getButton(), LEFT+RIGHT)){print("L+R");}else{print("neco
-	 * jineho");}
+	 * if(allButtons(getButton(), LEFT+RIGHT)){ print("L+R"); }else{ print("neco
+	 * jineho"); }
 	 *
 	 * ceka na stisk tlacitek a pokud bylo stisknuto LEFT+RIGHT, vypise "L+R", jinak
 	 * vypise text "neco jineho". Cekani na konkretni kombinaci klaves
@@ -584,16 +495,12 @@ public class Robotabor {
 	public static NXTRegMotor motB = new NXTRegMotor(MotorPort.B);
 	public static NXTRegMotor motC = new NXTRegMotor(MotorPort.C);
 
-
 	/* Inicializace zakladnich funkci (sensory a prime ovladani motoru) */
 
 	/*
-	 * Priklad pouziti sensoru:
-	 * TOUCH: touch1.isPressed() vrati true kdyz je
-	 * tlacitko stlaceno, jinak false
-	 * SONAR: sonar.getDistance() vrati 0 az 255 (255
-	 * znamena prilis velka vzdalenost nebo chyba)
-	 * LIGHT:
+	 * Priklad pouziti sensoru: TOUCH: touch1.isPressed() vrati true kdyz je
+	 * tlacitko stlaceno, jinak false SONAR: sonar.getDistance() vrati 0 az 255 (255
+	 * znamena prilis velka vzdalenost nebo chyba) LIGHT:
 	 * light1.readNormalizedValue() vrati 0 (tma) az 1023 (nejvetsi svetlo)
 	 * light1.setFloodlight(true) rozsviti cervene svetlo
 	 * light1.setFloodlight(false) zhasne cervene svetlo offtrack(light1)
@@ -646,7 +553,39 @@ public class Robotabor {
 	public static UltrasonicSensor sonar, sonar1, sonar2;
 	public static TouchSensor touch1, touch2, touch3, touch4;
 
-	private static void attach_sensor(Sensor in, SensorPort sp) {
+	/**
+	 * inicializuj knihovnu bez pripojenych sensoru
+	 */
+	public static void init() {
+		init(Sensor.NONE, Sensor.NONE, Sensor.NONE, Sensor.NONE);
+	}
+
+	/**
+	 * Inicializace knihovny s pripojenim sensoru.
+	 *
+	 *
+	 * @param p1 sensor pripojeny k portu 1
+	 * @param p2 sensor pripojeny k portu 2
+	 * @param p3 sensor pripojeny k portu 3
+	 * @param p4 sensor pripojeny k portu 4
+	 */
+	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
+		print("EasyRobotLibrary v 2026.1\n");
+		_TT = new Stopwatch();
+		_TT.reset();
+		motA.neutral();
+		motB.neutral();
+		motC.neutral();
+		_light_ct = 1;
+		_touch_ct = 1;
+		_sonar_ct = 1;
+		attachSensor(p1, SensorPort.S1);
+		attachSensor(p2, SensorPort.S2);
+		attachSensor(p3, SensorPort.S3);
+		attachSensor(p4, SensorPort.S4);
+	}
+
+	private static void attachSensor(Sensor in, SensorPort sp) {
 		if (in != Sensor.NONE) {
 			if (Sensor.TOUCH == in) {
 				TouchSensor t = new TouchSensor(sp);
@@ -689,42 +628,6 @@ public class Robotabor {
 		}
 	}
 
-	/**
-	 * inicializuj knihovnu bez pripojenych sensoru
-	 */
-	public static void init() {
-		init(Sensor.NONE, Sensor.NONE, Sensor.NONE, Sensor.NONE);
-	}
-
-	/**
-	 * Inicializace knihovny s pripojenim sensoru.
-	 *
-	 *
-	 * @param p1
-	 *            sensor pripojeny k portu 1
-	 * @param p2
-	 *            sensor pripojeny k portu 2
-	 * @param p3
-	 *            sensor pripojeny k portu 3
-	 * @param p4
-	 *            sensor pripojeny k portu 4
-	 */
-	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2025.7\n");
-		_TT = new Stopwatch();
-		_TT.reset();
-		motA.neutral();
-		motB.neutral();
-		motC.neutral();
-		_light_ct = 1;
-		_touch_ct = 1;
-		_sonar_ct = 1;
-		attach_sensor(p1, SensorPort.S1);
-		attach_sensor(p2, SensorPort.S2);
-		attach_sensor(p3, SensorPort.S3);
-		attach_sensor(p4, SensorPort.S4);
-	}
-
 	/******************* Buggy (podvozek robota) */
 
 	private static NXTRegMotor motL, motR;
@@ -734,13 +637,6 @@ public class Robotabor {
 	private static MotorDirection dir;
 	private static MotorInterwork sync;
 
-	public static void initBuggy(
-		float prumer_kola, float rozchod_kol,
-		NXTRegMotor levy_motor, NXTRegMotor pravy_motor
-	) {
-		init_buggy(prumer_kola, rozchod_kol, levy_motor, pravy_motor);
-	}
-
 	/**
 	 * Inicializuj podvozek robota, predpoklada se ze C je levy motor, B je pravy
 	 * motor
@@ -749,15 +645,12 @@ public class Robotabor {
 		initBuggy(prumer_kola, rozchod_kol, motC, motB);
 	}
 
-	public static void init_buggy(float prumer_kola, float rozchod_kol) { // pro kompatibilitu se starou verzi
-		init_buggy(prumer_kola, rozchod_kol, motC, motB);
+	public static void initBuggy(float prumer_kola, float rozchod_kol, NXTRegMotor levy_motor,
+			NXTRegMotor pravy_motor) {
+		MotorDirection dir = prumer_kola >= 0.0f ? MotorDirection.FORWARD : MotorDirection.INVERSE;
+		initBuggy(prumer_kola, rozchod_kol, levy_motor, pravy_motor, dir, MotorInterwork.TANDEM);
 	}
 
-	public static void init_buggy(float prumer_kola, float rozchod_kol, NXTRegMotor levy_motor, NXTRegMotor pravy_motor) {
-		MotorDirection dir = prumer_kola >= 0.0f ? MotorDirection.FORWARD : MotorDirection.INVERSE;
-		init_buggy(prumer_kola, rozchod_kol, levy_motor, pravy_motor, dir, MotorInterwork.TANDEM);
-	}
-	
 	/**
 	 * Inicializuj podvozek robota.
 	 * 
@@ -767,16 +660,13 @@ public class Robotabor {
 	 *                funguje a sledovani cary pozpatku tez (pokud je sensor na
 	 *                zadku robota)).
 	 * @param rozchod kol v mm. Musi byt kladny.
-	 * @param lmot Staticka instance leveho motoru.
-	 * @param rmot Staticka instance praveho motoru.
-	 * @param dir Pomer mezi smerem motoru <> jizdy robota.
-	 * @param sync Vztah mezi smerem leveho a praveho motoru.
+	 * @param lmot    Staticka instance leveho motoru.
+	 * @param rmot    Staticka instance praveho motoru.
+	 * @param dir     Pomer mezi smerem motoru <> jizdy robota.
+	 * @param sync    Vztah mezi smerem leveho a praveho motoru.
 	 */
-	public static void init_buggy(
-		float prumer, float rozchod,
-		NXTRegMotor levy_motor, NXTRegMotor pravy_motor,
-		MotorDirection smer_robota, MotorInterwork vztah_motoru
-	) {
+	public static void initBuggy(float prumer, float rozchod, NXTRegMotor levy_motor, NXTRegMotor pravy_motor,
+			MotorDirection smer_robota, MotorInterwork vztah_motoru) {
 		motL = levy_motor;
 		motR = pravy_motor;
 		// kompatibilita: pokud se zada kladny rozchod, nastavime
@@ -795,14 +685,14 @@ public class Robotabor {
 		RAD2DEG_invR = 1 / DEG2RAD_R;
 		half_DEG2RAD_R = 0.5f * DEG2RAD_R;
 		RAD2DEG_inv_absR = abs(RAD2DEG_invR);
-		reset_current_distance();
+		resetCurrentDistance();
 		speed(1000);
 	}
 
 	/**
 	 * Vynuluje mereni ujete vzdalenosti
 	 */
-	public static void reset_current_distance() {
+	public static void resetCurrentDistance() {
 		motR.resetTachoCount();
 		motL.resetTachoCount();
 	}
@@ -831,10 +721,10 @@ public class Robotabor {
 	}
 
 	/**
-	 * Rotace s ohledem na nastavenou synchronizaci motoru, tzn. pravy se otoci opacne,
-	 * pokud se pouziva COUNTER.
-	 * Na smer rotace (dir) se nebere ohled, ten by mel byt zahrnut ve vypoctech
-	 * parametru predanych do teto funkce, pravdepodobne skrze signum v polomeru kol.
+	 * Rotace s ohledem na nastavenou synchronizaci motoru, tzn. pravy se otoci
+	 * opacne, pokud se pouziva COUNTER. Na smer rotace (dir) se nebere ohled, ten
+	 * by mel byt zahrnut ve vypoctech parametru predanych do teto funkce,
+	 * pravdepodobne skrze signum v polomeru kol.
 	 */
 	private static void rotateWrtSync(float rotationLDeg, float rotationRDeg, boolean immediateReturn) {
 		motL.rotate(Math.round(resolveRotationL(rotationLDeg)), true);
@@ -846,10 +736,6 @@ public class Robotabor {
 	 * non_blocking==true)
 	 */
 	public static boolean isGoing() {
-		return is_going();
-	}
-
-	public static boolean is_going() {
 		return motL.isMoving() || motR.isMoving();
 	}
 
@@ -864,17 +750,15 @@ public class Robotabor {
 	private static void startLeftMotor(int way) {
 		if ((way < 0) ^ (dir == MotorDirection.INVERSE)) {
 			motL.backward();
-		}
-		else {
+		} else {
 			motL.forward();
 		}
 	}
-	
+
 	private static void startRightMotor(int way) {
 		if ((way < 0) ^ (dir == MotorDirection.INVERSE ^ sync == MotorInterwork.COUNTER)) {
 			motR.backward();
-		}
-		else {
+		} else {
 			motR.forward();
 		}
 	}
@@ -910,7 +794,7 @@ public class Robotabor {
 		// v2025.7 se nenastavuje way na 0
 		// racionale: pouziva se jen v line followeru kde chceme znat
 		// posledni smer jizdy, takze po zastaveni chceme nechat hodnotu z minula
-		//way = 0f;
+		// way = 0f;
 	}
 
 	public static void neutral() {
@@ -923,7 +807,7 @@ public class Robotabor {
 	public static void neutral(boolean immediateReturn) {
 		motL.flt(true);
 		motR.flt(immediateReturn);
-		//way = 0f;
+		// way = 0f;
 	}
 
 	/**
@@ -932,14 +816,6 @@ public class Robotabor {
 	 * zaporne cislo. Do drahy se pocita i otaceni kole na neutral().
 	 */
 	public static float getCurrentDistance() {
-		return current_distance();
-	}
-
-	public static float currentDistance() {
-		return current_distance();
-	}
-
-	public static float current_distance() {
 		int double_angle = motL.getTachoCount() + motR.getTachoCount();
 		return half_DEG2RAD_R * double_angle * sgn(_R);
 	}
@@ -982,12 +858,11 @@ public class Robotabor {
 	}
 
 	static float _1_360 = 1f / 360f;
-		
+
 	private static void arc(float left_mm, float right_mm, float dist, boolean nonBlocking) {
 		float speed = motL.getSpeed();
 		way = (int) Math.signum(right_mm);
-		motR.resetTachoCount();
-		motL.resetTachoCount();
+		resetCurrentDistance();
 		float time = dist / speed;
 		motL.origsetSpeed(left_mm / time);
 		motR.origsetSpeed(right_mm / time);
@@ -995,23 +870,33 @@ public class Robotabor {
 		motL.origsetSpeed(speed);
 		motR.origsetSpeed(speed);
 	}
-	
+
+	/**
+	 * Otoci se doleva v oblouku.
+	 * 
+	 * @param radius       Polomer oblouku = vzdalenost pomyslneho stredu rotacni
+	 *                     kruznice po "levici" robota
+	 * @param angle        Pocet stupnu ktere ma robot po kruznici ujet. Zaporne
+	 *                     jede dozadu.
+	 * @param non_blocking true pokud se nema cekat na skonceni
+	 */
 	public static void arcLeft(float radius, float angle, boolean non_blocking) {
-		arc(
-				arcCircumference(radius - _L, angle),
-				arcCircumference(radius + _L, angle),
-				arcCircumference(radius, angle),
-				non_blocking
-		);
+		arc(arcCircumference(radius - _L, angle), arcCircumference(radius + _L, angle), arcCircumference(radius, angle),
+				non_blocking);
 	}
-	
+
+	/**
+	 * Otoci se doprava v oblouku.
+	 * 
+	 * @param radius       Polomer oblouku = vzdalenost pomyslneho stredu rotacni
+	 *                     kruznice po "pravici" robota
+	 * @param angle        Pocet stupnu ktere ma robot po kruznici ujet. Zaporne
+	 *                     jede dozadu.
+	 * @param non_blocking true pokud se nema cekat na skonceni
+	 */
 	public static void arcRight(float radius, float angle, boolean non_blocking) {
-		arc(
-				arcCircumference(radius + _L, angle),
-				arcCircumference(radius - _L, angle),
-				arcCircumference(radius, angle),
-				non_blocking
-		);
+		arc(arcCircumference(radius + _L, angle), arcCircumference(radius - _L, angle), arcCircumference(radius, angle),
+				non_blocking);
 	}
 
 	public static void arcLeft(float radius, float angle) {
@@ -1021,9 +906,9 @@ public class Robotabor {
 	public static void arcRight(float radius, float angle) {
 		arcRight(radius, angle, false);
 	}
-	
+
 	private static float arcCircumference(float r, float a) {
-		return (float)(2 * Math.PI * Math.abs(r) * (a * _1_360));
+		return (float) (2 * Math.PI * Math.abs(r) * (a * _1_360));
 	}
 
 	/**
@@ -1038,8 +923,8 @@ public class Robotabor {
 	 */
 	public static void speed(float mmps) {
 		float stupnu_za_sekundu = RAD2DEG_inv_absR * mmps;
-		if (stupnu_za_sekundu > max_speed)
-			stupnu_za_sekundu = max_speed;
+		if (stupnu_za_sekundu > MAX_SPEED_DPS)
+			stupnu_za_sekundu = MAX_SPEED_DPS;
 		if (stupnu_za_sekundu > 0) {
 			motR.origsetSpeed(stupnu_za_sekundu);
 			motL.origsetSpeed(stupnu_za_sekundu);
@@ -1060,13 +945,13 @@ public class Robotabor {
 	 */
 	public static void speed(float left_mmps, float right_mmps) {
 		float stupnu_za_sekundu = RAD2DEG_inv_absR * left_mmps;
-		if (stupnu_za_sekundu > max_speed)
-			stupnu_za_sekundu = max_speed;
+		if (stupnu_za_sekundu > MAX_SPEED_DPS)
+			stupnu_za_sekundu = MAX_SPEED_DPS;
 		if (stupnu_za_sekundu > 0)
 			motL.origsetSpeed(stupnu_za_sekundu);
 		stupnu_za_sekundu = RAD2DEG_inv_absR * right_mmps;
-		if (stupnu_za_sekundu > max_speed)
-			stupnu_za_sekundu = max_speed;
+		if (stupnu_za_sekundu > MAX_SPEED_DPS)
+			stupnu_za_sekundu = MAX_SPEED_DPS;
 		if (stupnu_za_sekundu > 0)
 			motR.origsetSpeed(stupnu_za_sekundu);
 	}
@@ -1108,11 +993,7 @@ public class Robotabor {
 	 * bude pouzivat. Je vhodne pro tuto operaci nastavit mensi rychlost a zrychleni
 	 * pomoci speed() a reduce_acceleration() a pak je zase treba zvysi pro jizdu.
 	 */
-	public static void calibrate_buggy(LightSensor ls, int uhel) {
-		calibrateLight(ls, uhel);
-	}
-
-	public static void calibrateLight(LightSensor ls, int uhel) {
+	public static void calibrateBuggy(LightSensor ls, int uhel) {
 		turn(uhel, true);
 		int pokracovat = 2;
 		follow_ls = ls;
@@ -1124,7 +1005,7 @@ public class Robotabor {
 				black_level = jas;
 			if (jas > white_level)
 				white_level = jas;
-			if (!is_going()) {
+			if (!isGoing()) {
 				if (pokracovat > 1) {
 					pokracovat = 1;
 					turn(-uhel, true);
@@ -1135,13 +1016,13 @@ public class Robotabor {
 		}
 		if (white_level <= black_level) {
 			beep();
-			ms_sleep(120);
+			msSleep(120);
 			print("selhani kalibrace\n");
 			beep();
-			ms_sleep(20);
+			msSleep(20);
 			beep();
-			getb();
-			getb();
+			getButton();
+			getButton();
 		}
 		print("B=");
 		print(black_level);
@@ -1155,7 +1036,7 @@ public class Robotabor {
 	 * kalibrace svetelneho sensoru tak aby sledovala menici-se svetelne podminky,
 	 * tim ze zavolame tuto funkci.
 	 */
-	public static void recalibrate_on_white() {
+	public static void recalibrateOnWhite() {
 		int posunuti = follow_ls.readNormalizedValue() - white_level;
 		white_level = white_level + posunuti;
 		black_level = black_level + posunuti;
@@ -1174,8 +1055,9 @@ public class Robotabor {
 
 	static Fstate fstate;
 	static int state_change_time;
+	static boolean debug_follower = false;
 
-	public static void start_following(float p, float i, float d, float bsat, float wsat, float sdecay) {
+	public static void startFollowing(float p, float i, float d, float bsat, float wsat, float sdecay) {
 		follow_p = p;
 		follow_i = i;
 		follow_d = d;
@@ -1193,7 +1075,7 @@ public class Robotabor {
 		print("Fspeed=");
 		print(iround(forward_speed_degps / RAD2DEG_inv_absR));
 		print(" mm/s\n");
-		last_time = ms_time();
+		last_time = msTime();
 		last_print_time = last_time - 1000;
 		last_e = offtrack(follow_ls);
 		acc_e = 0;
@@ -1208,7 +1090,7 @@ public class Robotabor {
 	 * zavolat start_following a volat dokola follow(), kdyz se blizime ke konci tak
 	 * zavolat end_following a pak brake()
 	 */
-	public static void find_track(float searchSpeed) {
+	public static void findTrack(float searchSpeed) {
 		speed(searchSpeed);
 		forward();
 		while (offtrack(follow_ls) > -.3) {
@@ -1218,10 +1100,10 @@ public class Robotabor {
 
 	/* jede po cerne care, na jejim pravem okraji */
 	public static void follow() {
-		int now = ms_time();
+		int now = msTime();
 		if (now - last_time < 8) {
-			ms_sleep(10 - (now - last_time));
-			now = ms_time();
+			msSleep(10 - (now - last_time));
+			now = msTime();
 		}
 		float dt = 0.001f * (now - last_time);
 		float e = offtrack(follow_ls); /* 1=bila -1=cerna, cil je 0 */
@@ -1273,9 +1155,9 @@ public class Robotabor {
 			}
 			float ls = common_speed * (1 - a * way - slowdown);
 			float rs = common_speed * (1 + a * way - slowdown);
-			motR.set_speed(iround(rs));
-			motL.set_speed(iround(ls));
-			if (now - last_print_time > 250) {
+			motR.setSpeed(iround(rs));
+			motL.setSpeed(iround(ls));
+			if (now - last_print_time > 250 && debug_follower) {
 				if (e > 0)
 					print("e");
 				print(iround(e * 100));
@@ -1294,8 +1176,8 @@ public class Robotabor {
 		yield();
 	}
 
-	static void stop_following() {
-		motR.set_speed(iround(forward_speed_degps));
-		motL.set_speed(iround(forward_speed_degps));
+	static void stopFollowing() {
+		motR.setSpeed(iround(forward_speed_degps));
+		motL.setSpeed(iround(forward_speed_degps));
 	}
 }
