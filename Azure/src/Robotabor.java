@@ -1,3 +1,6 @@
+import java.io.OutputStream;
+import java.io.PrintStream;
+
 import lejos.nxt.*;
 import lejos.util.Stopwatch;
 
@@ -5,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.1
+ * @version 2026.2
  */
 public class Robotabor {
 
@@ -299,6 +302,51 @@ public class Robotabor {
 		}
 	}
 
+	private static class CustomLCDOutputStream extends OutputStream {
+
+		private int col = 0;
+		private int line = 0;
+
+		@Override
+		public void write(int c) {
+			char x = (char) (c & 0xFF);
+			switch (x) {
+			case '\t':
+				col = col + 8 - col % 8;
+				break;
+			case '\n':
+				incLine();
+			case '\r':
+				col = 0;
+				break;
+			case '\f':
+				LCD.clear();
+				line = 0;
+				col = 0;
+				break;
+			default:
+				if (col >= LCD.DISPLAY_CHAR_WIDTH) {
+					col = 0;
+					incLine();
+				}
+				LCD.drawChar(x, col++, line);
+			}
+		}
+
+		private void incLine() {
+			if (line < LCD.DISPLAY_CHAR_DEPTH - 1)
+				line++;
+			else
+				LCD.scroll();
+		}
+	}
+
+	static {
+		PrintStream lcdOut = new PrintStream(new CustomLCDOutputStream());
+		System.setOut(lcdOut);
+		System.setErr(lcdOut);
+	}
+
 	/* Vstup/vystup (klavesnice, obrazovka) */
 
 	/*
@@ -432,7 +480,7 @@ public class Robotabor {
 	}
 
 	public static void cls() {
-		LCD.clear();
+		System.out.print('\f');
 	}
 
 	public static int xres() {
@@ -570,7 +618,7 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.1\n");
+		print("EasyRobotLibrary v 2026.2\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -831,7 +879,7 @@ public class Robotabor {
 		 */
 		float alfa = deg * _L_over_R; /* to je totez, ale da to min prace spocitat */
 		int ialfa = iround(alfa);
-		rotateWrtSync(ialfa, -ialfa, non_blocking);
+		rotateWrtSync(-ialfa, ialfa, non_blocking);
 	}
 
 	/**
