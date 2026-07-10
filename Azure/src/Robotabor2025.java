@@ -1,5 +1,3 @@
-import lejos.nxt.*;
-
 /**
  * EasyRobotLibrary.
  *
@@ -41,7 +39,7 @@ public class Robotabor2025 extends Robotabor {
 		return getCurrentDistance();
 	}
 	
-	public void calibrate_light(LightSensor ls, int uhel) {
+	public void calibrate_light(RobotaborLightSensor ls, int uhel) {
 		calibrateBuggy(ls, uhel);
 	}
 	

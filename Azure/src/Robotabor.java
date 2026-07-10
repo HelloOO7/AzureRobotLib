@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.2
+ * @version 2026.3
  */
 public class Robotabor {
 
@@ -597,7 +597,7 @@ public class Robotabor {
 	 */
 
 	private static int _light_ct, _touch_ct, _sonar_ct;
-	public static LightSensor light1, light2;
+	public static RobotaborLightSensor light1, light2;
 	public static UltrasonicSensor sonar, sonar1, sonar2;
 	public static TouchSensor touch1, touch2, touch3, touch4;
 
@@ -652,7 +652,7 @@ public class Robotabor {
 				}
 				_touch_ct++;
 			} else if (Sensor.LIGHT == in) {
-				LightSensor l = new LightSensor(sp);
+				RobotaborLightSensor l = new RobotaborLightSensor(sp);
 				switch (_light_ct) {
 				case 1:
 					light1 = l;
@@ -673,6 +673,27 @@ public class Robotabor {
 				}
 				_sonar_ct++;
 			}
+		}
+	}
+	
+	public static class RobotaborLightSensor {
+
+		private final LightSensor impl;
+		
+		public RobotaborLightSensor(ADSensorPort port) {
+			this.impl = new LightSensor(port);
+		}
+		
+		public int getLight() {
+			return impl.getNormalizedLightValue();
+		}
+		
+		public void setFloodlight(boolean floodlight) {
+			impl.setFloodlight(floodlight);
+		}
+		
+		public boolean isFloodlightOn() {
+			return impl.isFloodlightOn();
 		}
 	}
 
@@ -1024,12 +1045,12 @@ public class Robotabor {
 
 	/******************* Kalibrace svetelneho sensoru */
 
-	static LightSensor follow_ls;
+	static RobotaborLightSensor follow_ls;
 	static int black_level, white_level;
 
 	/* vrati -1 (jsme kompletne na cerne) az 1 (jsme kompletne na bile) */
-	public static float offtrack(LightSensor ls) {
-		int c = ls.readNormalizedValue();
+	public static float offtrack(RobotaborLightSensor ls) {
+		int c = ls.getLight();
 		return (2 * (float) (c - black_level)) / (white_level - black_level) - 1;
 	}
 
@@ -1041,14 +1062,14 @@ public class Robotabor {
 	 * bude pouzivat. Je vhodne pro tuto operaci nastavit mensi rychlost a zrychleni
 	 * pomoci speed() a reduce_acceleration() a pak je zase treba zvysi pro jizdu.
 	 */
-	public static void calibrateBuggy(LightSensor ls, int uhel) {
+	public static void calibrateBuggy(RobotaborLightSensor ls, int uhel) {
 		turn(uhel, true);
 		int pokracovat = 2;
 		follow_ls = ls;
 		black_level = 65536;
 		white_level = 0;
 		while (pokracovat > 0) {
-			int jas = ls.readNormalizedValue();
+			int jas = ls.getLight();
 			if (jas < black_level)
 				black_level = jas;
 			if (jas > white_level)
@@ -1085,7 +1106,7 @@ public class Robotabor {
 	 * tim ze zavolame tuto funkci.
 	 */
 	public static void recalibrateOnWhite() {
-		int posunuti = follow_ls.readNormalizedValue() - white_level;
+		int posunuti = follow_ls.getLight() - white_level;
 		white_level = white_level + posunuti;
 		black_level = black_level + posunuti;
 	}
