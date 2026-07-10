@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.4
+ * @version 2026.5
  */
 public class Robotabor {
 
@@ -94,17 +94,17 @@ public class Robotabor {
 	}
 
 	public static float sgn(float x) {
-		if (x > 0)
-			return 1;
-		else
-			return -1;
+		return Math.signum(x);
 	}
 
 	public static int sgn(int x) {
-		if (x > 0)
+		if (x > 0) {
 			return 1;
-		else
+		} else if (x < 0) {
 			return -1;
+		} else {
+			return 0;
+		}
 	}
 
 	public static float abs(float x) {
@@ -618,7 +618,7 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.4\n");
+		print("EasyRobotLibrary v 2026.5\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -1114,7 +1114,7 @@ public class Robotabor {
 	/******************* Sledovani cary */
 
 	static float follow_p, follow_i, follow_d, follow_blacksat, follow_whitesat, slowdown_decay;
-	static float forward_speed_degps;
+	static float forward_speed_degps, follow_way;
 	static int last_time, last_print_time, isat;
 	static float last_e, acc_e, slowdown, lpf_slowdown, lpf_diff, prelpf_diff;
 
@@ -1124,7 +1124,7 @@ public class Robotabor {
 
 	static Fstate fstate;
 	static int state_change_time;
-	static boolean debug_follower = false;
+	static boolean debug_follower = true;
 
 	public static void startFollowing(float p, float i, float d, float bsat, float wsat, float sdecay) {
 		follow_p = p;
@@ -1137,7 +1137,11 @@ public class Robotabor {
 		lpf_slowdown = 0;
 		lpf_diff = 0;
 		prelpf_diff = 0;
-		forward_speed_degps = sgn(way * _R) * motL.getSpeed();
+		follow_way = way;
+		if (follow_way == 0f) {
+			follow_way = 1f;
+		}
+		forward_speed_degps = sgn(follow_way * _R) * motL.getSpeed();
 		float abs_rel_speed = abs(forward_speed_degps) * 0.003f;
 		follow_i *= abs_rel_speed;
 		follow_d /= abs_rel_speed;
@@ -1222,8 +1226,8 @@ public class Robotabor {
 					fstate = Fstate.OK;
 				common_speed = 240; // deg/s
 			}
-			float ls = common_speed * (1 - a * way - slowdown);
-			float rs = common_speed * (1 + a * way - slowdown);
+			float ls = common_speed * (1 - a * follow_way - slowdown);
+			float rs = common_speed * (1 + a * follow_way - slowdown);
 			motR.setSpeed(iround(rs));
 			motL.setSpeed(iround(ls));
 			if (now - last_print_time > 250 && debug_follower) {
