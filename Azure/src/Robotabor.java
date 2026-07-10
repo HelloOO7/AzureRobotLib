@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.3
+ * @version 2026.4
  */
 public class Robotabor {
 
@@ -618,7 +618,7 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.3\n");
+		print("EasyRobotLibrary v 2026.4\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -859,7 +859,7 @@ public class Robotabor {
 	 */
 	public static void brake(boolean immediateReturn) {
 		motL.stop(true);
-		motR.stop(true);
+		motR.stop(immediateReturn);
 		// v2025.7 se nenastavuje way na 0
 		// racionale: pouziva se jen v line followeru kde chceme znat
 		// posledni smer jizdy, takze po zastaveni chceme nechat hodnotu z minula
