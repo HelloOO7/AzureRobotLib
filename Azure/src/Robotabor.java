@@ -618,7 +618,7 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.2\n");
+		print("EasyRobotLibrary v 2026.3\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
