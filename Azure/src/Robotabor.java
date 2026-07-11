@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.5
+ * @version 2026.6
  */
 public class Robotabor {
 
@@ -237,23 +237,47 @@ public class Robotabor {
 		 * @param degPerSecond rychlost v stupnich za sekundu, muze byt zaporna nebo
 		 *                     nulova.
 		 */
+		/**
+		 * Nastav pozadovanou rychlost toceni motoru. 0=stop, >0=vpred, <0=vzad. Motor
+		 * se podle zadaneho cisla rozjeden nebo zastavi. Pohyb musi byt ukoncen pomoci
+		 * motX.stop() nebo pomoci dalsiho volani motX.setSpeed(). Pokud se misto toho
+		 * driv zavola rotateTo() nebo rotate() (dokud se motor jeste toci nasledkem
+		 * setSpeed()) nemusi dalsi setSpeed() fungovat podle ocekavani!!!
+		 *
+		 * @param degPerSecond rychlost v stupnich za sekundu, muze byt zaporna nebo
+		 *                     nulova.
+		 */
+		@Override
 		public void setSpeed(int degPerSecond) {
-			if (degPerSecond == 0) {
+			applySpeedToMotorState(sgn(degPerSecond));
+			if (degPerSecond != 0) {
+				super.setSpeed(abs(degPerSecond));
+			}
+		}
+
+		@Override
+		public void setSpeed(float degPerSecond) {
+			applySpeedToMotorState((int) sgn(degPerSecond));
+			if (degPerSecond != 0) {
+				super.setSpeed(abs(degPerSecond));
+			}
+		}
+
+		private void applySpeedToMotorState(int speedSgn) {
+			if (speedSgn == 0) {
 				if (lastState != MotorState.STOP) {
 					lastState = MotorState.STOP;
 					super.stop(true);
 				}
-			} else if (degPerSecond > 0) {
+			} else if (speedSgn > 0) {
 				if (lastState != MotorState.FWD) {
 					forward();
 				}
-				super.setSpeed(degPerSecond);
 				lastState = MotorState.FWD;
 			} else {
 				if (lastState != MotorState.BWD) {
 					backward();
 				}
-				super.setSpeed(-degPerSecond);
 				lastState = MotorState.BWD;
 			}
 		}
@@ -618,7 +642,7 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.5\n");
+		print("EasyRobotLibrary v 2026.6\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -675,23 +699,23 @@ public class Robotabor {
 			}
 		}
 	}
-	
+
 	public static class RobotaborLightSensor {
 
 		private final LightSensor impl;
-		
+
 		public RobotaborLightSensor(ADSensorPort port) {
 			this.impl = new LightSensor(port);
 		}
-		
+
 		public int getLight() {
 			return impl.getNormalizedLightValue();
 		}
-		
+
 		public void setFloodlight(boolean floodlight) {
 			impl.setFloodlight(floodlight);
 		}
-		
+
 		public boolean isFloodlightOn() {
 			return impl.isFloodlightOn();
 		}
@@ -699,7 +723,7 @@ public class Robotabor {
 
 	/******************* Buggy (podvozek robota) */
 
-	private static NXTRegMotor motL, motR;
+	public static NXTRegMotor motL, motR;
 	private static float _L, _R;
 	private static float RAD2DEG_invR, RAD2DEG_inv_absR, half_DEG2RAD_R;
 	private static float _L_over_R;
@@ -766,8 +790,8 @@ public class Robotabor {
 		motL.resetTachoCount();
 	}
 
-	static float target_dist;
-	static float way; /* 1 vpred (mm>0), -1 vzad (mm<0) */
+	public static float target_dist;
+	public static float way; /* 1 vpred (mm>0), -1 vzad (mm<0) */
 
 	/**
 	 * jede vpred mm milimietru, pokud je non_blocking == true, neceka na dokonceni
@@ -1045,7 +1069,7 @@ public class Robotabor {
 
 	/******************* Kalibrace svetelneho sensoru */
 
-	static RobotaborLightSensor follow_ls;
+	private static RobotaborLightSensor follow_ls;
 	static int black_level, white_level;
 
 	/* vrati -1 (jsme kompletne na cerne) az 1 (jsme kompletne na bile) */
@@ -1113,18 +1137,18 @@ public class Robotabor {
 
 	/******************* Sledovani cary */
 
-	static float follow_p, follow_i, follow_d, follow_blacksat, follow_whitesat, slowdown_decay;
-	static float forward_speed_degps, follow_way;
-	static int last_time, last_print_time, isat;
-	static float last_e, acc_e, slowdown, lpf_slowdown, lpf_diff, prelpf_diff;
+	private static float follow_p, follow_i, follow_d, follow_blacksat, follow_whitesat, slowdown_decay;
+	private static float forward_speed_degps, follow_way;
+	private static int last_time, last_print_time, isat;
+	private static float last_e, acc_e, slowdown, lpf_slowdown, lpf_diff, prelpf_diff;
 
 	enum Fstate {
 		OK, SLOWING, SLOW
 	};
 
-	static Fstate fstate;
-	static int state_change_time;
-	static boolean debug_follower = true;
+	private static Fstate fstate;
+	private static int state_change_time;
+	private static boolean debug_follower = false;
 
 	public static void startFollowing(float p, float i, float d, float bsat, float wsat, float sdecay) {
 		follow_p = p;
@@ -1249,7 +1273,7 @@ public class Robotabor {
 		yield();
 	}
 
-	static void stopFollowing() {
+	public static void stopFollowing() {
 		motR.setSpeed(iround(forward_speed_degps));
 		motL.setSpeed(iround(forward_speed_degps));
 	}
