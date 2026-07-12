@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.6
+ * @version 2026.7
  */
 public class Robotabor {
 
@@ -642,7 +642,12 @@ public class Robotabor {
 	 * @param p4 sensor pripojeny k portu 4
 	 */
 	public static void init(Sensor p1, Sensor p2, Sensor p3, Sensor p4) {
-		print("EasyRobotLibrary v 2026.6\n");
+		Sensor[] arr = new Sensor[] {p1, p2, p3, p4};
+		init(arr);
+	}
+
+	public static void init(Sensor... sensors) {
+		print("EasyRobotLibrary v 2026.7\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -651,14 +656,22 @@ public class Robotabor {
 		_light_ct = 1;
 		_touch_ct = 1;
 		_sonar_ct = 1;
-		attachSensor(p1, SensorPort.S1);
-		attachSensor(p2, SensorPort.S2);
-		attachSensor(p3, SensorPort.S3);
-		attachSensor(p4, SensorPort.S4);
+		attachSensorFromArray(sensors, 0, SensorPort.S1);
+		attachSensorFromArray(sensors, 1, SensorPort.S2);
+		attachSensorFromArray(sensors, 2, SensorPort.S3);
+		attachSensorFromArray(sensors, 3, SensorPort.S4);
+	}
+	
+	private static void attachSensorFromArray(Sensor[] sensors, int index, SensorPort port) {
+		if (index < sensors.length) {
+			attachSensor(sensors[index], port);
+		} else {
+			attachSensor(Sensor.NONE, port);
+		}
 	}
 
 	private static void attachSensor(Sensor in, SensorPort sp) {
-		if (in != Sensor.NONE) {
+		if (in != null && in != Sensor.NONE) {
 			if (Sensor.TOUCH == in) {
 				TouchSensor t = new TouchSensor(sp);
 				switch (_touch_ct) {
