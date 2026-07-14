@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.9
+ * @version 2026.10
  */
 public class Robotabor {
 
@@ -693,7 +693,7 @@ public class Robotabor {
 	}
 
 	public static void init(Sensor... sensors) {
-		print("EasyRobotLibrary v 2026.9\n");
+		print("EasyRobotLibrary v 2026.10\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -1043,7 +1043,7 @@ public class Robotabor {
 			angle += motL.getTachoCount();
 		}
 		if (motR != null) {
-			angle = motR.getTachoCount();
+			angle += motR.getTachoCount();
 		}
 		return div * angle * sgn(_R);
 	}
