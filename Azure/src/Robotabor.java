@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.10
+ * @version 2026.11
  */
 public class Robotabor {
 
@@ -48,10 +48,9 @@ public class Robotabor {
 	public static enum MotorInterwork {
 		TANDEM, COUNTER
 	}
-	
+
 	public static enum Side {
-		LEFT,
-		RIGHT
+		LEFT, RIGHT
 	}
 
 	/* Matematicke funkce a konstanty */
@@ -472,6 +471,25 @@ public class Robotabor {
 	}
 
 	/**
+	 * "Killswitch" - spusti vlakno, ktere po X milisekundach (od zavolani funkce)
+	 * zastavi provadeni programu a restartuje robota. Po spusteni jiz killswitch
+	 * nelze zrusit.
+	 * 
+	 * @param milliseconds
+	 */
+	public static void shutdownAfter(int milliseconds) {
+		final int delay = milliseconds;
+		new Thread() {
+
+			@Override
+			public void run() {
+				msSleep(delay);
+				System.exit(0);
+			}
+		}.start();
+	}
+
+	/**
 	 * dej procesoru sanci, aby se venoval taky necemu dalsimu
 	 */
 	public static void yield() {
@@ -693,7 +711,7 @@ public class Robotabor {
 	}
 
 	public static void init(Sensor... sensors) {
-		print("EasyRobotLibrary v 2026.10\n");
+		print("EasyRobotLibrary v 2026.11\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -1343,7 +1361,7 @@ public class Robotabor {
 		fstate = Fstate.OK;
 		state_change_time = last_time;
 	}
-	
+
 	public static void setFollowSide(Side side) {
 		follow_side = side == Side.RIGHT ? 1f : -1f;
 	}
