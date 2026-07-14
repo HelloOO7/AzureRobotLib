@@ -8,7 +8,7 @@ import lejos.util.Stopwatch;
  * EasyRobotLibrary.
  *
  * @author Dr. David (TM), Tomáš, Čeněk.
- * @version 2026.8
+ * @version 2026.9
  */
 public class Robotabor {
 
@@ -47,6 +47,11 @@ public class Robotabor {
 
 	public static enum MotorInterwork {
 		TANDEM, COUNTER
+	}
+	
+	public static enum Side {
+		LEFT,
+		RIGHT
 	}
 
 	/* Matematicke funkce a konstanty */
@@ -264,22 +269,31 @@ public class Robotabor {
 		}
 
 		private void applySpeedToMotorState(int speedSgn) {
-			if (speedSgn == 0) {
-				if (lastState != MotorState.STOP) {
-					lastState = MotorState.STOP;
-					super.stop(true);
-				}
-			} else if (speedSgn > 0) {
-				if (lastState != MotorState.FWD) {
+			if (updateMotorStateBySpeed(speedSgn)) {
+				switch (lastState) {
+				case STOP:
+					stop(true);
+					break;
+				case FWD:
 					forward();
-				}
-				lastState = MotorState.FWD;
-			} else {
-				if (lastState != MotorState.BWD) {
+					break;
+				case BWD:
 					backward();
+					break;
 				}
-				lastState = MotorState.BWD;
 			}
+		}
+
+		private boolean updateMotorStateBySpeed(int speedSgn) {
+			MotorState current = lastState;
+			if (speedSgn > 0) {
+				lastState = MotorState.FWD;
+			} else if (speedSgn < 0) {
+				lastState = MotorState.BWD;
+			} else {
+				lastState = MotorState.STOP;
+			}
+			return lastState != current;
 		}
 
 		/**
@@ -298,6 +312,29 @@ public class Robotabor {
 			super.setSpeed(degPerSecond);
 		}
 
+		@Override
+		public void forward() {
+			lastState = MotorState.FWD;
+			super.forward();
+		}
+
+		@Override
+		public void backward() {
+			lastState = MotorState.BWD;
+			super.backward();
+		}
+
+		@Override
+		public void stop() {
+			stop(false);
+		}
+
+		@Override
+		public void stop(boolean immediate) {
+			lastState = MotorState.STOP;
+			super.stop(immediate);
+		}
+
 		/**
 		 * Zastav motor brzdenim
 		 *
@@ -305,20 +342,29 @@ public class Robotabor {
 		 *                  k zastaveni
 		 */
 		public void brake(boolean immediate) {
-			lastState = MotorState.STOP;
-			super.stop(immediate);
+			stop(immediate);
 		}
 
 		public void brake() {
 			brake(false);
 		}
 
+		@Override
+		public void flt() {
+			flt(false);
+		}
+
+		@Override
+		public void flt(boolean immediate) {
+			lastState = MotorState.STOP;
+			super.flt(immediate);
+		}
+
 		/**
 		 * Zastav motor, nech prirozene dojet
 		 */
 		public void neutral(boolean immediate) {
-			lastState = MotorState.STOP;
-			super.flt(immediate);
+			flt(immediate);
 		}
 
 		public void neutral() {
@@ -647,7 +693,7 @@ public class Robotabor {
 	}
 
 	public static void init(Sensor... sensors) {
-		print("EasyRobotLibrary v 2026.8\n");
+		print("EasyRobotLibrary v 2026.9\n");
 		_TT = new Stopwatch();
 		_TT.reset();
 		motA.neutral();
@@ -1250,7 +1296,7 @@ public class Robotabor {
 	/******************* Sledovani cary */
 
 	private static float follow_p, follow_i, follow_d, follow_blacksat, follow_whitesat, slowdown_decay;
-	private static float forward_speed_degps, follow_way;
+	private static float forward_speed_degps, follow_way, follow_side;
 	private static int last_time, last_print_time, isat;
 	private static float last_e, acc_e, slowdown, lpf_slowdown, lpf_diff, prelpf_diff;
 
@@ -1277,13 +1323,18 @@ public class Robotabor {
 		if (follow_way == 0f) {
 			follow_way = 1f;
 		}
+		if (follow_side == 0f) {
+			follow_side = 1f;
+		}
 		forward_speed_degps = sgn(follow_way * _R) * motL.getSpeed();
 		float abs_rel_speed = abs(forward_speed_degps) * 0.003f;
 		follow_i *= abs_rel_speed;
 		follow_d /= abs_rel_speed;
-		print("Fspeed=");
-		print(iround(forward_speed_degps / RAD2DEG_inv_absR));
-		print(" mm/s\n");
+		if (debug_follower) {
+			print("Fspeed=");
+			print(iround(forward_speed_degps / RAD2DEG_inv_absR));
+			print(" mm/s\n");
+		}
 		last_time = msTime();
 		last_print_time = last_time - 1000;
 		last_e = offtrack(follow_ls);
@@ -1291,6 +1342,10 @@ public class Robotabor {
 		isat = 0;
 		fstate = Fstate.OK;
 		state_change_time = last_time;
+	}
+	
+	public static void setFollowSide(Side side) {
+		follow_side = side == Side.RIGHT ? 1f : -1f;
 	}
 
 	/**
@@ -1304,7 +1359,7 @@ public class Robotabor {
 		forward();
 		waitForTrack();
 	}
-	
+
 	/**
 	 * Pocka nez robot uvidi caru. Je potreba volat v nejake vnejsi funkci, treba
 	 * turnLeft(); waitForTrack(); stop();
@@ -1370,8 +1425,8 @@ public class Robotabor {
 					fstate = Fstate.OK;
 				common_speed = 240; // deg/s
 			}
-			float ls = common_speed * (1 - a * follow_way - slowdown);
-			float rs = common_speed * (1 + a * follow_way - slowdown);
+			float ls = common_speed * (1 - a * follow_way * follow_side - slowdown);
+			float rs = common_speed * (1 + a * follow_way * follow_side - slowdown);
 			motR.setSpeed(iround(rs));
 			motL.setSpeed(iround(ls));
 			if (now - last_print_time > 250 && debug_follower) {
